@@ -1,0 +1,68 @@
+/* General Styles */
+body {
+    background-color: #f7f9fc;
+}
+
+.bg-light {
+    background-color: #ffffff !important;
+}
+
+.card-body {
+    background-color: #ffffff;
+    border-radius: 15px;
+}
+
+/* Buttons */
+.btn-outline-danger,
+.btn-outline-primary {
+    border-radius: 50px;
+}
+
+.bsb-btn-circle {
+    padding: 10px 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+
+.bsb-btn-circle-2xl {
+    font-size: 20px;
+    width: 70px;
+    height: 70px;
+}
+
+.form-floating {
+    margin-bottom: 15px;
+}
+
+.form-check-label {
+    font-size: 14px;
+}
+
+.form-check-input {
+    margin-top: 6px;
+}
+/* Smaller Google Button Styling */
+.bsb-btn-circle {
+  padding: 5px 10px; /* Smaller padding */
+  width: 40px; /* Smaller width */
+  height: 40px; /* Smaller height */
+  border-radius: 50%; /* Circular shape */
+}
+
+.bsb-btn-circle-2xl {
+  font-size: 18px; /* Smaller font size */
+  width: 50px; /* Adjusted size */
+  height: 50px; /* Adjusted size */
+}
+
+/* Center the Google button */
+.d-flex.justify-content-center {
+  display: flex;
+  justify-content: center;
+}
+
+.bsb-btn-circle svg {
+  width: 20px; /* Adjusted icon size */
+  height: 20px; /* Adjusted icon size */
+}

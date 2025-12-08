@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+# Base directory path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -9,7 +10,7 @@ SECRET_KEY = 'django-insecure-8s!hb(j^pv$4jk+g7i#wbk%4_u=lkzrsgo+9xtno(*2j2m76b+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']  # You can change this based on your production settings
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -18,7 +19,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',  # Static files app
-    'accounts',
+    'accounts',  # Your custom app
 ]
 
 MIDDLEWARE = [
@@ -36,7 +37,7 @@ ROOT_URLCONF = 'myproject.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # This looks for templates in the templates folder
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -55,15 +56,15 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'mydb',
-        'USER': 'myuser',
-        'PASSWORD': 'zeesh1906',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': 'mydb',  # Your database name
+        'USER': 'myuser',  # Your database user
+        'PASSWORD': 'zeesh1906',  # Your database password
+        'HOST': 'localhost',  # Database host
+        'PORT': '5432',  # Database port
     }
 }
 
-# Password validation
+# Password validation settings
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -79,19 +80,33 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internationalization
+# Internationalization settings
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = '/static/'  # Required for staticfiles app to work
+STATIC_URL = '/static/'  # URL for serving static files
+
+# Use this for collecting static files in production
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),  # Add static folder
+]
+
+# Directory for collected static files in production
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
 # Login redirect URL after successful login
 LOGIN_REDIRECT_URL = '/home/'
+
+# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Configure for file handling (if required)
+MEDIA_URL = '/media/'  # URL for accessing media files
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Directory for storing media files
 
