@@ -1,0 +1,140 @@
+<!-- accounts/templates/accounts/home.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container mt-4">
+        <div class="row card-stats">
+            <!-- Revenue Card -->
+            <div class="col-md-3">
+                <div class="card text-white bg-success">
+                    <div class="card-header">Revenue</div>
+                    <div class="card-body">
+                        <h5 class="card-title">$23,569.00</h5>
+                        <p class="card-text">↑ 12.5%</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sales Card -->
+            <div class="col-md-3">
+                <div class="card text-white bg-primary">
+                    <div class="card-header">Sales</div>
+                    <div class="card-body">
+                        <h5 class="card-title">3,435</h5>
+                        <p class="card-text">↑ 8.2%</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customers Card -->
+            <div class="col-md-3">
+                <div class="card text-white bg-info">
+                    <div class="card-header">Customers</div>
+                    <div class="card-body">
+                        <h5 class="card-title">1,245</h5>
+                        <p class="card-text">↑ 5.7%</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bounce Rate Card -->
+            <div class="col-md-3">
+                <div class="card text-white bg-warning">
+                    <div class="card-header">Bounce Rate</div>
+                    <div class="card-body">
+                        <h5 class="card-title">47.0%</h5>
+                        <p class="card-text">↓ 2.1%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sales Overview Graph -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <h4>Sales Overview</h4>
+                <div class="card">
+                    <div class="card-body">
+                        <img src="https://via.placeholder.com/800x400" alt="Sales Overview Graph" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity Section -->
+        <div class="row">
+            <div class="col-md-12">
+                <h4>Recent Activity</h4>
+                <div class="card">
+                    <div class="card-body">
+                        <ul class="list-group">
+                            <li class="list-group-item">New order received - Order #12345 from John Doe</li>
+                            <li class="list-group-item">New customer registered - Jane Smith joined the platform</li>
+                            <li class="list-group-item">Low stock alert - Product SKU #789 is running low</li>
+                            <li class="list-group-item">New review posted - Product SKU #789 has new reviews</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Traffic Sources -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <h4>Traffic Sources</h4>
+                <div class="card">
+                    <div class="card-body">
+                        <img src="https://via.placeholder.com/500x500" alt="Traffic Sources Chart" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Products -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <h4>Top Products</h4>
+                <div class="card">
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Sales</th>
+                                    <th>Revenue</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Premium Widget</td>
+                                    <td>245</td>
+                                    <td>$12,250</td>
+                                    <td>In Stock</td>
+                                </tr>
+                                <tr>
+                                    <td>Standard Package</td>
+                                    <td>189</td>
+                                    <td>$9,460</td>
+                                    <td>In Stock</td>
+                                </tr>
+                                <tr>
+                                    <td>Basic Module</td>
+                                    <td>156</td>
+                                    <td>$4,880</td>
+                                    <td>Low Stock</td>
+                                </tr>
+                                <tr>
+                                    <td>Pro Bundle</td>
+                                    <td>98</td>
+                                    <td>$19,600</td>
+                                    <td>In Stock</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

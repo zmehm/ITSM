@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="card shadow-sm border-light rounded">
+        <div class="card-header bg-primary text-white text-center">
+            <h4>Create Incident</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <!-- Subsidary -->
+                <div class="form-group mb-3">
+                    <label for="subsidiary" class="font-weight-bold">Subsidiary</label>
+                    <input type="text" id="subsidiary" name="subsidiary" class="form-control" required>
+                </div>
+
+                <!-- Category Selection -->
+                <div class="form-group mb-3">
+                    <label for="category" class="font-weight-bold">Category</label>
+                    <select id="category" name="category" class="form-control" required>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Subcategory Selection -->
+                <div class="form-group mb-3">
+                    <label for="subcategory" class="font-weight-bold">Subcategory</label>
+                    <select id="subcategory" name="subcategory" class="form-control" required>
+                        {% for subcategory in subcategories %}
+                            <option value="{{ subcategory.id }}">{{ subcategory.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group mb-3">
+                    <label for="description" class="font-weight-bold">Description</label>
+                    <textarea id="description" name="description" class="form-control" rows="4" required></textarea>
+                </div>
+
+                <!-- Impact -->
+                <div class="form-group mb-3">
+                    <label for="impact" class="font-weight-bold">Impact</label>
+                    <input type="text" id="impact" name="impact" class="form-control" required>
+                </div>
+
+                <!-- Priority -->
+                <div class="form-group mb-3">
+                    <label for="priority" class="font-weight-bold">Priority</label>
+                    <select id="priority" name="priority" class="form-control" required>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+
+                <!-- File Upload -->
+                <div class="form-group mb-3">
+                    <label for="file_upload" class="font-weight-bold">Upload File (JPG, PDF)</label>
+                    <input type="file" id="file_upload" name="file_upload" class="form-control" accept=".jpg, .jpeg, .pdf">
+                </div>
+
+                <!-- Submit Button -->
+                <div class="form-group mb-3 text-center">
+                    <button type="submit" class="btn btn-success btn-lg w-100">Submit Incident</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        background-color: #f8f9fa;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        box-shadow: none;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+        border-color: #007bff;
+        outline: none;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    }
+    .card-header {
+        background-color: #343a40;
+        color: white;
+    }
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+    .btn-success:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
+    }
+</style>
+
+{% endblock %}

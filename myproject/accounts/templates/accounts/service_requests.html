@@ -1,0 +1,25 @@
+{% extends 'accounts/home.html' %}
+
+{% block dashboard_content %}
+<h3>Service Requests</h3>
+<div class="row">
+    {% for request in requests %}
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Request ID: {{ request.request_id }}</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Status:</strong> {{ request.status }}</p>
+                <p><strong>Request Type:</strong> {{ request.request_type }}</p>
+                <p><strong>Requested By:</strong> {{ request.requested_by }}</p>
+                <p><strong>Requested On:</strong> {{ request.requested_on }}</p>
+
+                <!-- Button to view full details (you can link to another page for detailed view) -->
+                <a href="#" class="btn btn-primary w-100 mt-3">View Request</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

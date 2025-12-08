@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card shadow-sm p-4">
+            <div class="text-center mb-4">
+                <h2>Create Your Account</h2>
+                <p class="text-muted">All fields are required.</p>
+            </div>
+            <form method="POST">
+                {% csrf_token %}
+                
+                <!-- EmpID -->
+                <div class="mb-3">
+                    <label for="EmpID" class="form-label">Employee ID</label>
+                    {{ form.EmpID }}  <!-- Automatically rendered Django form field -->
+                </div>
+
+                <!-- EmpName -->
+                <div class="mb-3">
+                    <label for="EmpName" class="form-label">Employee Name</label>
+                    {{ form.EmpName }}  <!-- Automatically rendered Django form field -->
+                </div>
+
+                <!-- DoB -->
+                <div class="mb-3">
+                    <label for="DoB" class="form-label">Date of Birth</label>
+                    {{ form.DoB }}  <!-- Automatically rendered Django form field -->
+                </div>
+
+                <!-- Dept -->
+                <div class="mb-3">
+                    <label for="Dept" class="form-label">Department</label>
+                    {{ form.Dept }}  <!-- Automatically rendered Django form field -->
+                </div>
+
+                <!-- Grade -->
+                <div class="mb-3">
+                    <label for="Grade" class="form-label">Grade</label>
+                    {{ form.Grade }}  <!-- Automatically rendered Django form field -->
+                </div>
+
+                <!-- Discipline -->
+                <div class="mb-3">
+                    <label for="Discipline" class="form-label">Discipline</label>
+                    {{ form.Discipline }}  <!-- Automatically rendered Django form field -->
+                </div>
+
+                <!-- Active -->
+                <div class="mb-3">
+                    <label for="Active" class="form-label">Active</label>
+                    {{ form.Active }}  <!-- Automatically rendered Django form field -->
+                </div>
+
+                <!-- Password -->
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password (8 characters minimum)</label>
+                    {{ form.password }}  <!-- Automatically rendered Django form field -->
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="mb-3">
+                    <label for="confirm_password" class="form-label">Confirm Password</label>
+                    {{ form.confirm_password }}  <!-- Automatically rendered Django form field -->
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary w-100 mt-3">Create Account</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
