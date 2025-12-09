@@ -10,7 +10,7 @@ SECRET_KEY = 'django-insecure-8s!hb(j^pv$4jk+g7i#wbk%4_u=lkzrsgo+9xtno(*2j2m76b+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']  # You can change this based on your production settings
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']  # Change this when moving to production
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -97,6 +97,15 @@ STATICFILES_DIRS = [
 # Directory for collected static files in production
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+# --- SESSION CONFIGURATION FOR LOGOUT ON BROWSER CLOSE ---
+# If True, the session cookie expires when the user closes their browser.
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# Ensures session data is saved on every request, which is helpful when 
+# modifying session expiration logic like this.
+SESSION_SAVE_EVERY_REQUEST = True
+# -----------------------------------------------------------
+
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
@@ -109,4 +118,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Configure for file handling (if required)
 MEDIA_URL = '/media/'  # URL for accessing media files
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Directory for storing media files
-

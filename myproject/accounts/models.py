@@ -1,5 +1,5 @@
-from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 import os
 import uuid
@@ -19,22 +19,30 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.username
 
-# Employee model to store employee details
+# --- Employee model to store employee details ---
 class Employee(models.Model):
     GENDER_CHOICES = [
         ('Male', 'Male'),
         ('Female', 'Female'),
     ]
     
+    # CRITICAL: Links one User to one Employee.
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
-    EmpID = models.CharField(max_length=10, unique=True)
-    EmpName = models.CharField(max_length=100)
-    DoB = models.DateField()
-    Gender = models.CharField(max_length=6, choices=GENDER_CHOICES)
-    Dept = models.CharField(max_length=100)
-    Grade = models.CharField(max_length=50)
-    Discipline = models.CharField(max_length=100)
-    Floor = models.CharField(max_length=100)
+    
+    # MODIFIED: Added blank=True, null=True to allow profile creation 
+    # via signal before the user completes the profile form.
+    EmpID = models.CharField(max_length=10, unique=True, blank=True, null=True)
+    EmpName = models.CharField(max_length=100, blank=True, null=True)
+    DoB = models.DateField(blank=True, null=True)
+    Gender = models.CharField(max_length=6, choices=GENDER_CHOICES, blank=True, null=True)
+    
+    # These fields are checked for profile completion in your home view:
+    Dept = models.CharField(max_length=100, blank=True, null=True)
+    Grade = models.CharField(max_length=50, blank=True, null=True)
+    Discipline = models.CharField(max_length=100, blank=True, null=True)
+    Floor = models.CharField(max_length=100, blank=True, null=True)
+    
+    # Other fields
     Active = models.BooleanField(default=True)
     Created_On = models.DateField(auto_now_add=True)
     Created_Time = models.TimeField(auto_now_add=True)
@@ -43,16 +51,17 @@ class Employee(models.Model):
     Phone = models.CharField(max_length=15, blank=True, null=True)
 
     def __str__(self):
-        return self.EmpName
+        # Fallback to username if EmpName is null
+        return self.EmpName or f"Profile for {self.user.username}" 
 
-# Category model for incident classification
+# --- Category model for incident classification ---
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.name
 
-# SubCategory model for further incident classification under Category
+# --- SubCategory model for further incident classification ---
 class SubCategory(models.Model):
     name = models.CharField(max_length=100, unique=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
@@ -60,7 +69,7 @@ class SubCategory(models.Model):
     def __str__(self):
         return self.name
 
-# Incident model for managing incidents
+# --- Incident model for managing incidents ---
 class Incident(models.Model):
     STATUS_CHOICES = [
         ('new', 'New'),
@@ -76,15 +85,15 @@ class Incident(models.Model):
     ]
     
     incident_number = models.CharField(max_length=50, unique=True)
-    subsidiary = models.CharField(max_length=100)
+    subsidiary = models.CharField(max_length=100) # CONSIDER making this nullable if not always required
     empID = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
     catID = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
     subcatID = models.ForeignKey(SubCategory, on_delete=models.SET_NULL, null=True, blank=True)
     configuration_item = models.CharField(max_length=100, blank=True, null=True)
     description = models.TextField()
     file_upload = models.FileField(upload_to='incidents/', blank=True, null=True, validators=[validate_file_extension])
-    impact = models.CharField(max_length=50)
-    state = models.CharField(max_length=50)
+    impact = models.CharField(max_length=50) # CONSIDER adding choices if this is controlled
+    state = models.CharField(max_length=50) # CONSIDER adding choices
     
     created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True)
     created_on = models.DateField(auto_now_add=True)
@@ -100,6 +109,7 @@ class Incident(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.incident_number:
+            # Generates a unique, short ID
             self.incident_number = f"INC-{uuid.uuid4().hex[:6].upper()}"
         super().save(*args, **kwargs)
 

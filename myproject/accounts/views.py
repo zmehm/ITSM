@@ -1,16 +1,45 @@
 from django.shortcuts import render, redirect
-from .forms import EmployeeRegistrationForm  # Import the new Employee form
+from .forms import EmployeeRegistrationForm, ProfileCompletionForm
 from django.contrib.auth import login, authenticate
 from django.contrib import messages
 from django.contrib.auth.forms import PasswordResetForm
-from django.contrib.auth import get_user_model  # Use get_user_model() for CustomUser
-from .models import Employee  # Import the Employee model
+from django.contrib.auth import get_user_model
+from .models import Employee, Category, SubCategory, Incident
 from django.contrib.auth.decorators import login_required
-from .models import Category, SubCategory, Incident
+from .decorators import profile_required  # <-- NEW IMPORT
+from django.contrib.auth import logout
+# Home view (handles profile completion form)
+def home(request):
+    # Ensure the user is authenticated, otherwise redirect them to login
+    if not request.user.is_authenticated:
+        return redirect('login_view') # Assuming you have a login URL name 'login_view'
 
+    try:
+        employee = request.user.employee 
+    except Employee.DoesNotExist:
+        # Note: A new user should technically be handled by the signal, 
+        # but this remains a robust check for existing users.
+        employee = Employee.objects.create(user=request.user)
 
-# Incident Creation View
+    if not employee.Dept or not employee.Grade or not employee.Discipline:
+        if request.method == 'POST':
+            form = ProfileCompletionForm(request.POST, instance=employee) 
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Profile completed successfully!")
+                return redirect('home')
+            else:
+                messages.error(request, "Please correct the errors in the form.")
+        else:
+            form = ProfileCompletionForm(instance=employee)
+
+        return render(request, 'accounts/home.html', {'form': form}) 
+
+    return render(request, 'accounts/home.html')
+
+# Incident creation view
 @login_required
+@profile_required  # <-- Applied
 def create_incident(request):
     categories = Category.objects.all()
     subcategories = SubCategory.objects.all()
@@ -21,123 +50,106 @@ def create_incident(request):
         subcategory_id = request.POST.get('subcategory')
         impact = request.POST.get('impact')
         priority = request.POST.get('priority')
-        file_upload = request.FILES.get('file_upload')  # Get the uploaded file
+        file_upload = request.FILES.get('file_upload')
 
         category = Category.objects.get(id=category_id)
         subcategory = SubCategory.objects.get(id=subcategory_id)
 
-        # Ensure the user has an associated Employee object before creating the incident
         try:
             employee = request.user.employee
         except Employee.DoesNotExist:
             messages.error(request, "No employee record found for this user.")
-            return redirect('incident_management')  # Redirect to incident management if error
+            return redirect('incident_management') # This part is less critical now due to @profile_required
 
-        # Create the new incident
         incident = Incident(
             description=description,
             catID=category,
             subcatID=subcategory,
             impact=impact,
             priority=priority,
-            file_upload=file_upload,  # Save the uploaded file
+            file_upload=file_upload,
             created_by=request.user,
             empID=employee,
         )
         incident.save()
-
-        return redirect('incident_list')  # Redirect to the list of incidents
+        return redirect('incident_list') # Assuming 'incident_list' is the correct URL name
 
     return render(request, 'incident_management.html', {
         'categories': categories,
         'subcategories': subcategories
     })
 
-
-# Home view
+# Incident management view
 @login_required
-def home(request):
-    return render(request, 'accounts/home.html')
-
-
-# Incident Management View
-@login_required
+@profile_required  # <-- Applied
 def incident_management(request):
-    return render(request, 'accounts/incident_management.html')
+    incidents = Incident.objects.filter(created_by=request.user) 
+    return render(request, 'accounts/incident_management.html', {'incidents': incidents})
 
-
-# Problem Management View
+# Problem management view
 @login_required
+@profile_required  # <-- Applied
 def problem_management(request):
     return render(request, 'accounts/problem_management.html')
 
-
-# Change Management View
+# Change management view
 @login_required
+@profile_required  # <-- Applied
 def change_management(request):
     return render(request, 'accounts/change_management.html')
 
-
-# Service Requests View
+# Service requests view
 @login_required
+@profile_required  # <-- Applied
 def service_requests(request):
     return render(request, 'accounts/service_requests.html')
-
 
 # Registration view for Employee
 def register_employee(request):
     if request.method == 'POST':
         form = EmployeeRegistrationForm(request.POST)
         if form.is_valid():
-            # The form.save() method creates both the User and Employee instance
-            user = form.save()  # The `form.save()` method will create the user and handle password hashing
-            
-            # Login the user automatically after registration
+            user = form.save()
             login(request, user)
-
             messages.success(request, "Employee registered successfully.")
-            return redirect('home')  # Redirect to the home page or another page you prefer
+            return redirect('home')
         else:
-            print(form.errors)  # Print any validation errors for debugging
+            print(form.errors)
     else:
         form = EmployeeRegistrationForm()
 
     return render(request, 'accounts/register.html', {'form': form})
 
-
-# Login view (handle username or email)
+# Login view for handling both username/email login
 def login_view(request):
-    # If the user is already authenticated, redirect to the home page
     if request.user.is_authenticated:
-        return redirect('home')  # Redirect to the homepage or dashboard
+        return redirect('home')
     
     if request.method == 'POST':
-        # Get the username/email and password from the POST request
         username_email = request.POST.get('username_email')
         password = request.POST.get('password')
         
-        # Authenticate the user by checking if it's a valid username or email
-        User = get_user_model()  # Use the custom user model
+        User = get_user_model()
         try:
-            # Try to authenticate by username first
             user = authenticate(request, username=username_email, password=password)
-            # If authentication fails with username, try with email
             if user is None:
                 user = authenticate(request, email=username_email, password=password)
         except Exception as e:
-            user = None  # Handle any exceptions, e.g., if email field is missing in the User model
+            user = None
 
-        # If user is authenticated and is active, log them in and redirect
         if user is not None and user.is_active:
             login(request, user)
-            return redirect('home')  # Redirect to the homepage or dashboard
-        
-        # If login fails, show an error message
+            return redirect('home')
         else:
-            messages.error(request, 'Invalid username or password. Please try again.')
+            messages.error(request, 'Invalid username or password.')
 
-    # Render the login page if it's not a POST request or if login fails
     return render(request, 'accounts/login.html')
+
+def logout_view(request):
+    logout(request)
+    # Redirect to the login page or a simple thank you page
+    return redirect('login_view')
+
 
 
 # Password reset view

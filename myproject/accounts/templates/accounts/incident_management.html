@@ -10,45 +10,38 @@
             <form method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
                 
-                <!-- Subsidary -->
                 <div class="form-group mb-3">
                     <label for="subsidiary" class="font-weight-bold">Subsidiary</label>
                     <input type="text" id="subsidiary" name="subsidiary" class="form-control" required>
                 </div>
 
-                <!-- Category Selection -->
                 <div class="form-group mb-3">
-                    <label for="category" class="font-weight-bold">Category</label>
-                    <select id="category" name="category" class="form-control" required>
+                    <label for="category-select" class="font-weight-bold">Category</label>
+                    <select id="category-select" name="category" class="form-control" required>
+                        <option value="">Select a Category</option>
                         {% for category in categories %}
                             <option value="{{ category.id }}">{{ category.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
 
-                <!-- Subcategory Selection -->
                 <div class="form-group mb-3">
-                    <label for="subcategory" class="font-weight-bold">Subcategory</label>
-                    <select id="subcategory" name="subcategory" class="form-control" required>
-                        {% for subcategory in subcategories %}
-                            <option value="{{ subcategory.id }}">{{ subcategory.name }}</option>
-                        {% endfor %}
-                    </select>
+                    <label for="subcategory-select" class="font-weight-bold">Subcategory</label>
+                    <select id="subcategory-select" name="subcategory" class="form-control" disabled required>
+                        <option value="">Select a Category first</option>
+                        </select>
                 </div>
 
-                <!-- Description -->
                 <div class="form-group mb-3">
                     <label for="description" class="font-weight-bold">Description</label>
                     <textarea id="description" name="description" class="form-control" rows="4" required></textarea>
                 </div>
 
-                <!-- Impact -->
                 <div class="form-group mb-3">
                     <label for="impact" class="font-weight-bold">Impact</label>
                     <input type="text" id="impact" name="impact" class="form-control" required>
                 </div>
 
-                <!-- Priority -->
                 <div class="form-group mb-3">
                     <label for="priority" class="font-weight-bold">Priority</label>
                     <select id="priority" name="priority" class="form-control" required>
@@ -58,13 +51,11 @@
                     </select>
                 </div>
 
-                <!-- File Upload -->
                 <div class="form-group mb-3">
                     <label for="file_upload" class="font-weight-bold">Upload File (JPG, PDF)</label>
                     <input type="file" id="file_upload" name="file_upload" class="form-control" accept=".jpg, .jpeg, .pdf">
                 </div>
 
-                <!-- Submit Button -->
                 <div class="form-group mb-3 text-center">
                     <button type="submit" class="btn btn-success btn-lg w-100">Submit Incident</button>
                 </div>
@@ -73,7 +64,72 @@
     </div>
 </div>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- Element References ---
+        const categorySelect = document.getElementById('category-select');
+        const subcategorySelect = document.getElementById('subcategory-select');
+        
+        // Use Django's {% url %} tag to get the base API path securely
+        // We use '0' as a placeholder for the category_id, which we slice off.
+        const subcategoryUrlBase = "{% url 'get_subcategories' 0 %}".slice(0, -2); 
+
+        // --- Event Listener ---
+        categorySelect.addEventListener('change', function() {
+            const categoryId = this.value;
+
+            // 1. Reset and disable the Subcategory dropdown
+            subcategorySelect.innerHTML = '<option value="">Loading...</option>';
+            subcategorySelect.disabled = true;
+
+            if (categoryId) {
+                // 2. Construct the full API URL
+                const apiUrl = `${subcategoryUrlBase}${categoryId}/`;
+                
+                // 3. AJAX Request using Fetch API
+                fetch(apiUrl)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch subcategories.');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // 4. Repopulate Subcategory dropdown
+                        subcategorySelect.innerHTML = '<option value="">Select a Sub-Category</option>';
+                        
+                        data.subcategories.forEach(subcat => {
+                            const option = document.createElement('option');
+                            option.value = subcat.id;
+                            option.textContent = subcat.name;
+                            subcategorySelect.appendChild(option);
+                        });
+                        
+                        subcategorySelect.disabled = (data.subcategories.length === 0);
+                        if (data.subcategories.length === 0) {
+                            subcategorySelect.innerHTML = '<option value="">No sub-categories available</option>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('AJAX Error:', error);
+                        subcategorySelect.innerHTML = '<option value="">Error loading</option>';
+                    });
+            } else {
+                // If no Category is selected, reset subcategory dropdown
+                subcategorySelect.innerHTML = '<option value="">Select a Category first</option>';
+            }
+        });
+        
+        // --- Initial Load Check ---
+        // Ensure the dropdowns start in the correct state if using Django form binding
+        if (!categorySelect.value) {
+             subcategorySelect.disabled = true;
+        }
+    });
+</script>
+
 <style>
+    /* ... (Your existing CSS styles remain here) ... */
     .card {
         background-color: #f8f9fa;
     }
