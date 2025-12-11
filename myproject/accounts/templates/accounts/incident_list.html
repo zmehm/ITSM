@@ -2,13 +2,85 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2>Your Submitted Incidents</h2>
-    {% if incidents %}
-        <p>We found {{ incidents.count }} incident(s).</p>
-        {% else %}
-        <p>You have not submitted any incidents yet.</p>
+    <div class="row mb-3 align-items-center">
+        <div class="col-md-9">
+            <h2>Incident Queue</h2>
+            <p class="text-muted">Viewing incidents created by **{{ request.user.email }}**</p>
+        </div>
+        <div class="col-md-3 text-end">
+            <a href="{% url 'create_incident' %}" class="btn btn-success">
+                <i class="fas fa-plus-circle"></i> Create New Incident
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
     {% endif %}
 
-    <a href="{% url 'create_incident' %}" class="btn btn-primary">Submit New Incident</a>
+    {% if incidents %}
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Incident #</th>
+                                <th>Category</th>
+                                <th>Subcategory</th>
+                                <th>Description Summary</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Created On</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for incident in incidents %}
+                            <tr>
+                                <td><a href="#" class="text-decoration-none fw-bold">{{ incident.incident_number }}</a></td>
+                                <td>{{ incident.catID.name|default:"N/A" }}</td>
+                                <td>{{ incident.subcatID.name|default:"N/A" }}</td>
+                                <td>{{ incident.description|truncatechars:50 }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if incident.priority == 'high' %}bg-danger
+                                        {% elif incident.priority == 'medium' %}bg-warning text-dark
+                                        {% else %}bg-info text-dark{% endif %}">
+                                        {{ incident.priority|upper }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if incident.status == 'resolved' or incident.status == 'closed' %}bg-success
+                                        {% elif incident.status == 'in_progress' %}bg-primary
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ incident.status|upper }}
+                                    </span>
+                                </td>
+                                <td>{{ incident.created_on|date:"Y-m-d" }}</td>
+                                <td>
+                                    <a href="#" class="btn btn-sm btn-outline-primary" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center mt-5" role="alert">
+            <h4 class="alert-heading">No Incidents Found!</h4>
+            <p>You have not reported any incidents yet. Click the button above to get started.</p>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}

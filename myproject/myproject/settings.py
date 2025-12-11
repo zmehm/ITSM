@@ -83,7 +83,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTHENTICATION_BACKENDS = [
-    'accounts.backends.EmailBackend',  # <-- Your custom email logic
+    'accounts.backends.DualFieldBackend',  # <-- Your custom email logic
     'django.contrib.auth.backends.ModelBackend', # <-- Keep the default as a fallback
 ]
 
