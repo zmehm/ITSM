@@ -4,55 +4,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ITSM Portal</title>
+    <title>ITSM Portal - {% block title %}{% endblock %}</title>
 
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <!-- Static CSS -->
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 
-    <!-- Custom Styles -->
     <style>
         :root {
+            /* Your custom color variables */
+            --sidebar-width: 260px;
             --sidebar-bg: #1f2933;
             --sidebar-bg-dark: #151b23;
             --sidebar-text: #e5ecff;
             --sidebar-text-muted: #9ca9c9;
             --sidebar-active: #2563eb;
-            --content-bg: #f5f7fb;
+            --content-bg: #f5f7fb; /* The desired light gray color */
+            --topbar-height: 50px; /* Reduced height for the header */
         }
 
+        /* --- FORCE BACKGROUND COLOR --- */
         html, body {
             height: 100%;
             margin: 0;
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background-color: var(--content-bg);
+            background-color: var(--content-bg) !important; /* Forces the light gray background */
         }
-
-        /* Layout */
+        
+        /* --- LAYOUT AND STRUCTURAL STYLES --- */
         .layout {
             display: flex;
             min-height: 100vh;
         }
 
-        /* Sidebar */
+        .content {
+            flex: 1;
+            padding: 0;
+            background-color: var(--content-bg) !important; 
+            overflow-x: hidden;
+            position: relative;
+            /* Pushes content right to clear the fixed sidebar */
+            margin-left: var(--sidebar-width); 
+        }
+
+        /* --- SIDEBAR STYLING (FIXED POSITION & START BELOW TOPBAR) --- */
         .sidebar {
-            width: 260px;
+            width: var(--sidebar-width);
             background: linear-gradient(180deg, var(--sidebar-bg), var(--sidebar-bg-dark));
             color: var(--sidebar-text);
             padding: 1.5rem 1.25rem;
+            flex-shrink: 0;
+            
+            position: fixed;
+            top: var(--topbar-height); /* Starts exactly below the dark header */
+            bottom: 0; 
+            left: 0;
+            overflow-y: auto;
+            z-index: 90;
         }
 
-        .sidebar-brand {
+        .sidebar-brand { /* This is the brand inside the sidebar, which is now redundant but kept */
             display: flex;
             align-items: center;
             gap: 0.75rem;
             margin-bottom: 2rem;
+            color: white;
         }
 
         .sidebar-logo {
@@ -72,7 +90,7 @@
             font-size: 1.1rem;
             font-weight: 600;
         }
-
+        
         .nav-section-title {
             font-size: 0.75rem;
             letter-spacing: 0.08em;
@@ -82,171 +100,171 @@
             margin-bottom: 0.5rem;
         }
 
-        .sidebar-nav {
-            list-style: none;
-            padding-left: 0;
-            margin: 0;
-        }
-
-        .sidebar-nav-item {
-            margin-bottom: 0.1rem;
-        }
-
-        .sidebar-nav-link {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.75rem;
+        /* Standard Bootstrap list-group customization */
+        .sidebar .list-group-item {
+            background-color: transparent;
+            border: none;
+            color: var(--sidebar-text);
             padding: 0.55rem 0.75rem;
             border-radius: 0.7rem;
-            color: var(--sidebar-text);
+            margin-bottom: 0.1rem;
             text-decoration: none;
             font-size: 0.92rem;
-            transition: background 0.15s ease, color 0.15s ease, transform 0.1s;
+            transition: background 0.15s ease, transform 0.1s;
         }
 
-        .sidebar-nav-link:hover {
+        .sidebar .list-group-item:hover {
             background-color: rgba(148, 163, 184, 0.18);
             transform: translateX(2px);
+            color: var(--sidebar-text);
         }
-
-        .sidebar-nav-link .left {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
+        
+        .sidebar .list-group-item.active {
+            background: linear-gradient(135deg, #2563eb, #4f46e5);
+            color: #fff;
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.45);
         }
-
-        .sidebar-nav-link i {
+        
+        .sidebar .list-group-item i {
             font-size: 1rem;
             color: var(--sidebar-text-muted);
         }
 
-        .sidebar-nav-link span.label {
-            color: var(--sidebar-text);
+        .sidebar .list-group-item.active i {
+            color: #e0ecff;
         }
 
-        .sidebar-nav-link span.badge-pill {
+        .sidebar .badge-pill {
             background-color: var(--sidebar-active);
             color: #fff;
             border-radius: 999px;
             padding: 0.1rem 0.55rem;
             font-size: 0.7rem;
         }
-
-        .sidebar-nav-link.active {
-            background: linear-gradient(135deg, #2563eb, #4f46e5);
-            color: #fff;
-            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.45);
+        
+        /* --- TOP BAR STYLING (Dark, Fixed to the top) --- */
+        .app-topbar {
+            height: var(--topbar-height);
+            background-color: var(--sidebar-bg); 
+            border-bottom: 1px solid #10151c; 
+            padding: 0 2rem; 
+            display: flex;
+            align-items: center;
+            justify-content: space-between; 
+            
+            position: fixed;
+            top: 0;
+            width: 100%; 
+            z-index: 100;
+        }
+        
+        /* App Brand in Top Bar (ITSM Admin) */
+        .app-topbar .navbar-brand {
+             color: white !important;
+             font-weight: 600;
+             font-size: 1.25rem;
+             display: flex; 
+             align-items: center;
+        }
+        
+        /* Custom Button Size for Dashboard and Logout */
+        .app-topbar .btn-md-custom {
+            padding: 0.35rem 0.8rem; 
+            font-size: 0.85rem;
+            border-radius: 0.3rem;
+        }
+        
+        .content-body {
+            background-color: var(--content-bg) !important;
+            padding: 1.5rem 2rem; 
+            /* Ensures content starts below the fixed top bar */
+            padding-top: calc(var(--topbar-height) + 1.5rem); 
         }
 
-        .sidebar-nav-link.active i {
-            color: #e0ecff;
-        }
-
-        /* Main content */
-        .content {
-            flex: 1;
-            padding: 1.5rem 2rem;
-            background-color: var(--content-bg);
-            overflow-x: hidden;
-        }
-
-        /* Remove sidebar for login and register pages */
-        .no-sidebar .sidebar {
-            display: none;
+        /* --- RESPONSIVENESS (Sidebar hides on small screens) --- */
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none !important;
+            }
+            .content {
+                margin-left: 0;
+            }
+            .app-topbar {
+                width: 100%; 
+            }
         }
     </style>
 </head>
 
 <body>
-    <header class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'home' %}">ITSM Portal</a>
+    <div class="layout"> 
+        
+        <div class="app-topbar">
+            
+            <a class="navbar-brand" href="{% url 'home' %}">
+                <div class="sidebar-logo me-2" style="width: 25px; height: 25px; border-radius: 5px;">
+                    <i class="fa-solid fa-angle-up" style="font-size: 0.8rem;"></i>
+                </div>
+                ITSM Admin
+            </a>
 
-            <ul class="navbar-nav ms-auto">
-                {% if request.user.is_authenticated %}
-                    <li class="nav-item">
-                        <span class="nav-link text-dark">Welcome, {{ request.user.first_name }}</span>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link btn btn-outline-danger" href="{% url 'logout_view' %}">Logout</a>
-                    </li>
-                {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link btn btn-outline-primary me-2" href="{% url 'login_view' %}">Login</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link btn btn-outline-success" href="{% url 'register_employee' %}">Register</a>
-                    </li>
-                {% endif %}
-            </ul>
+            <div class="d-flex align-items-center">
+                <a href="{% url 'home' %}" class="btn btn-warning btn-md-custom me-3">
+                    <i class="fa-solid fa-tachometer-alt me-1"></i> Dashboard
+                </a>
+                
+                <a href="{% url 'logout_view' %}" class="btn btn-danger btn-md-custom">
+                    <i class="fa-solid fa-sign-out-alt me-1"></i> Logout
+                </a>
+            </div>
         </div>
-    </header>
-
-    <div class="layout {% if not request.user.is_authenticated %}no-sidebar{% endif %}">
+        
         {% if request.user.is_authenticated %}
             <aside class="sidebar">
-                <div class="sidebar-brand">
-                    <div class="sidebar-logo">
-                        <i class="fa-solid fa-angle-up"></i>
-                    </div>
-                    <div class="sidebar-title">ITSM Admin</div>
+                <div class="nav-section-title">Navigation</div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'home' %}" class="list-group-item d-flex align-items-center {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                        <i class="fa-solid fa-house me-3"></i>
+                        Dashboard
+                    </a>
                 </div>
 
-                <div class="nav-section-title">Navigation</div>
-                <ul class="sidebar-nav">
-                    <li class="sidebar-nav-item">
-                        <a href="{% url 'home' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
-                            <div class="left">
-                                <i class="fa-solid fa-house"></i>
-                                <span class="label">Dashboard</span>
-                            </div>
-                        </a>
-                    </li>
-                </ul>
-
                 <div class="nav-section-title mt-3">ITSM Modules</div>
-                <ul class="sidebar-nav">
-                    <li class="sidebar-nav-item">
-                        <a href="{% url 'create_incident' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'create_incident' %}active{% endif %}">
-                            <div class="left">
-                                <i class="fa-solid fa-triangle-exclamation"></i>
-                                <span class="label">Incident Management</span>
-                            </div>
-                            <span class="badge-pill">7</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-nav-item">
-                        <a href="{% url 'problem_management' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'problem_management' %}active{% endif %}">
-                            <div class="left">
-                                <i class="fa-solid fa-bug"></i>
-                                <span class="label">Problem Management</span>
-                            </div>
-                        </a>
-                    </li>
-                    <li class="sidebar-nav-item">
-                        <a href="{% url 'change_management' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'change_management' %}active{% endif %}">
-                            <div class="left">
-                                <i class="fa-solid fa-arrows-rotate"></i>
-                                <span class="label">Change Management</span>
-                            </div>
-                        </a>
-                    </li>
-                    <li class="sidebar-nav-item">
-                        <a href="{% url 'service_requests' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'service_requests' %}active{% endif %}">
-                            <div class="left">
-                                <i class="fa-solid fa-clipboard-list"></i>
-                                <span class="label">Service Requests</span>
-                            </div>
-                        </a>
-                    </li>
-                </ul>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'create_incident' %}" class="list-group-item d-flex align-items-center justify-content-between {% if request.resolver_match.url_name == 'create_incident' %}active{% endif %}">
+                        <div><i class="fa-solid fa-triangle-exclamation me-3"></i> Create Incident</div>
+                    </a>
+                    
+                    <a href="{% url 'incident_list' %}" class="list-group-item d-flex align-items-center {% if request.resolver_match.url_name == 'incident_list' %}active{% endif %}">
+                        <i class="fa-solid fa-list-check me-3"></i> View My Incidents
+                    </a>
+                    
+                    <a href="{% url 'problem_management' %}" class="list-group-item d-flex align-items-center {% if request.resolver_match.url_name == 'problem_management' %}active{% endif %}">
+                        <i class="fa-solid fa-bug me-3"></i> Problem Management
+                    </a>
+                    
+                    <a href="{% url 'change_management' %}" class="list-group-item d-flex align-items-center {% if request.resolver_match.url_name == 'change_management' %}active{% endif %}">
+                        <i class="fa-solid fa-arrows-rotate me-3"></i> Change Management
+                    </a>
+                    
+                    <a href="{% url 'service_requests' %}" class="list-group-item d-flex align-items-center {% if request.resolver_match.url_name == 'service_requests' %}active{% endif %}">
+                        <i class="fa-solid fa-clipboard-list me-3"></i> Service Requests
+                    </a>
+                    
+                    <a href="{% url 'logout_view' %}" class="list-group-item d-flex align-items-center mt-3 text-danger border border-danger border-opacity-25">
+                        <i class="fa-solid fa-right-from-bracket me-3"></i> Logout
+                    </a>
+                </div>
             </aside>
         {% endif %}
 
         <main class="content">
-            {% block content %}
-            {% endblock %}
+            
+            <div class="content-body">
+                {% block content %}
+                {% endblock %}
+            </div>
+            
         </main>
     </div>
 
@@ -256,5 +274,4 @@
     {% block extra_js %}
     {% endblock %}
 </body>
-
 </html>

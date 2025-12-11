@@ -1,12 +1,7 @@
-# accounts/urls.py
-
 from django.urls import path
 from django.views.generic import RedirectView
 from . import views 
-
 urlpatterns = [
-    # AUTHENTICATION PATHS (Standardized Names)
-    # The URL paths are defined here
     path('login/', views.login_view, name='login_view'),
     path('logout/', views.logout_view, name='logout_view'),
     path('register/', views.register_employee, name='register_employee'),

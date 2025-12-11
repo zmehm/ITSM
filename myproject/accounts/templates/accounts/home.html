@@ -47,11 +47,11 @@
                     First Name <span class="text-danger">*</span>
                   </label>
                   <input type="text" 
-                         class="form-control {% if form.first_name.errors %}is-invalid{% endif %}" 
-                         name="{{ form.first_name.name }}" id="{{ form.first_name.id_for_label }}" 
-                         placeholder="Enter your First Name" 
-                         value="{{ form.first_name.value|default_if_none:'' }}" 
-                         required>
+                            class="form-control {% if form.first_name.errors %}is-invalid{% endif %}" 
+                            name="{{ form.first_name.name }}" id="{{ form.first_name.id_for_label }}" 
+                            placeholder="Enter your First Name" 
+                            value="{{ form.first_name.value|default_if_none:'' }}" 
+                            required>
                   {% for error in form.first_name.errors %}
                       <div class="invalid-feedback">{{ error }}</div>
                   {% endfor %}
@@ -62,11 +62,11 @@
                     Last Name <span class="text-danger">*</span>
                   </label>
                   <input type="text" 
-                         class="form-control {% if form.last_name.errors %}is-invalid{% endif %}" 
-                         name="{{ form.last_name.name }}" id="{{ form.last_name.id_for_label }}" 
-                         placeholder="Enter your Last Name" 
-                         value="{{ form.last_name.value|default_if_none:'' }}" 
-                         required>
+                            class="form-control {% if form.last_name.errors %}is-invalid{% endif %}" 
+                            name="{{ form.last_name.name }}" id="{{ form.last_name.id_for_label }}" 
+                            placeholder="Enter your Last Name" 
+                            value="{{ form.last_name.value|default_if_none:'' }}" 
+                            required>
                   {% for error in form.last_name.errors %}
                       <div class="invalid-feedback">{{ error }}</div>
                   {% endfor %}
@@ -77,11 +77,11 @@
                     Email <span class="text-danger">*</span>
                   </label>
                   <input type="email" 
-                         class="form-control {% if form.Email.errors %}is-invalid{% endif %}" 
-                         name="{{ form.Email.name }}" id="{{ form.Email.id_for_label }}" 
-                         placeholder="Enter your Email" 
-                         value="{{ form.Email.value|default_if_none:'' }}" 
-                         required>
+                            class="form-control {% if form.Email.errors %}is-invalid{% endif %}" 
+                            name="{{ form.Email.name }}" id="{{ form.Email.id_for_label }}" 
+                            placeholder="Enter your Email" 
+                            value="{{ form.Email.value|default_if_none:'' }}" 
+                            required>
                   {% for error in form.Email.errors %}
                       <div class="invalid-feedback">{{ error }}</div>
                   {% endfor %}
@@ -92,11 +92,11 @@
                     Mobile Number <span class="text-danger">*</span>
                   </label>
                   <input type="tel" 
-                         class="form-control {% if form.Phone.errors %}is-invalid{% endif %}" 
-                         name="{{ form.Phone.name }}" id="{{ form.Phone.id_for_label }}" 
-                         placeholder="Enter your Mobile Number" 
-                         value="{{ form.Phone.value|default_if_none:'' }}" 
-                         required>
+                            class="form-control {% if form.Phone.errors %}is-invalid{% endif %}" 
+                            name="{{ form.Phone.name }}" id="{{ form.Phone.id_for_label }}" 
+                            placeholder="Enter your Mobile Number" 
+                            value="{{ form.Phone.value|default_if_none:'' }}" 
+                            required>
                   {% for error in form.Phone.errors %}
                       <div class="invalid-feedback">{{ error }}</div>
                   {% endfor %}
@@ -117,10 +117,10 @@
                     Date of Birth <span class="text-danger">*</span>
                   </label>
                   <input type="date" 
-                         class="form-control {% if form.DoB.errors %}is-invalid{% endif %}" 
-                         name="{{ form.DoB.name }}" id="{{ form.DoB.id_for_label }}" 
-                         value="{{ form.DoB.value|default_if_none:'' }}" 
-                         required>
+                            class="form-control {% if form.DoB.errors %}is-invalid{% endif %}" 
+                            name="{{ form.DoB.name }}" id="{{ form.DoB.id_for_label }}" 
+                            value="{{ form.DoB.value|default_if_none:'' }}" 
+                            required>
                   {% for error in form.DoB.errors %}
                       <div class="invalid-feedback">{{ error }}</div>
                   {% endfor %}
@@ -133,11 +133,11 @@
                     Department <span class="text-danger">*</span>
                   </label>
                   <input type="text" 
-                         class="form-control {% if form.Dept.errors %}is-invalid{% endif %}" 
-                         name="{{ form.Dept.name }}" id="{{ form.Dept.id_for_label }}" 
-                         placeholder="Enter Department" 
-                         value="{{ form.Dept.value|default_if_none:'' }}" 
-                         required>
+                            class="form-control {% if form.Dept.errors %}is-invalid{% endif %}" 
+                            name="{{ form.Dept.name }}" id="{{ form.Dept.id_for_label }}" 
+                            placeholder="Enter Department" 
+                            value="{{ form.Dept.value|default_if_none:'' }}" 
+                            required>
                   {% for error in form.Dept.errors %}
                       <div class="invalid-feedback">{{ error }}</div>
                   {% endfor %}
@@ -148,11 +148,11 @@
                     Grade <span class="text-danger">*</span>
                   </label>
                   <input type="text" 
-                         class="form-control {% if form.Grade.errors %}is-invalid{% endif %}" 
-                         name="{{ form.Grade.name }}" id="{{ form.Grade.id_for_label }}" 
-                         placeholder="Enter Grade" 
-                         value="{{ form.Grade.value|default_if_none:'' }}" 
-                         required>
+                            class="form-control {% if form.Grade.errors %}is-invalid{% endif %}" 
+                            name="{{ form.Grade.name }}" id="{{ form.Grade.id_for_label }}" 
+                            placeholder="Enter Grade" 
+                            value="{{ form.Grade.value|default_if_none:'' }}" 
+                            required>
                   {% for error in form.Grade.errors %}
                       <div class="invalid-feedback">{{ error }}</div>
                   {% endfor %}
@@ -163,11 +163,11 @@
                     Discipline <span class="text-danger">*</span>
                   </label>
                   <input type="text" 
-                         class="form-control {% if form.Discipline.errors %}is-invalid{% endif %}" 
-                         name="{{ form.Discipline.name }}" id="{{ form.Discipline.id_for_label }}" 
-                         placeholder="Enter Discipline" 
-                         value="{{ form.Discipline.value|default_if_none:'' }}" 
-                         required>
+                            class="form-control {% if form.Discipline.errors %}is-invalid{% endif %}" 
+                            name="{{ form.Discipline.name }}" id="{{ form.Discipline.id_for_label }}" 
+                            placeholder="Enter Discipline" 
+                            value="{{ form.Discipline.value|default_if_none:'' }}" 
+                            required>
                   {% for error in form.Discipline.errors %}
                       <div class="invalid-feedback">{{ error }}</div>
                   {% endfor %}
@@ -178,11 +178,11 @@
                     Floor <span class="text-danger">*</span>
                   </label>
                   <input type="text" 
-                         class="form-control {% if form.Floor.errors %}is-invalid{% endif %}" 
-                         name="{{ form.Floor.name }}" id="{{ form.Floor.id_for_label }}" 
-                         placeholder="Enter Floor" 
-                         value="{{ form.Floor.value|default_if_none:'' }}" 
-                         required>
+                            class="form-control {% if form.Floor.errors %}is-invalid{% endif %}" 
+                            name="{{ form.Floor.name }}" id="{{ form.Floor.id_for_label }}" 
+                            placeholder="Enter Floor" 
+                            value="{{ form.Floor.value|default_if_none:'' }}" 
+                            required>
                   {% for error in form.Floor.errors %}
                       <div class="invalid-feedback">{{ error }}</div>
                   {% endfor %}
@@ -191,10 +191,10 @@
                 <div class="col-12 mt-4">
                   <div class="form-check">
                     <input class="form-check-input" 
-                            type="checkbox" 
-                            name="{{ form.Active.name }}" 
-                            id="{{ form.Active.id_for_label }}" 
-                            {% if form.Active.value %}checked{% endif %}>
+                             type="checkbox" 
+                             name="{{ form.Active.name }}" 
+                             id="{{ form.Active.id_for_label }}" 
+                             {% if form.Active.value %}checked{% endif %}>
                     <label class="form-check-label text-secondary" for="{{ form.Active.id_for_label }}">
                       Active Employee Status
                     </label>
@@ -213,9 +213,25 @@
             </form>
             
             {% else %}
-            <div class="text-center mt-5">
-                <a href="{% url 'create_incident' %}" class="btn btn-primary btn-lg px-5">Go to Dashboard</a>
-                <p class="text-secondary mt-3">You can now access all management tools.</p>
+            <div class="row g-4 mt-3">
+                <div class="col-md-6">
+                    <div class="card p-4 shadow-sm h-100 border-primary">
+                        <h4 class="fw-bold text-primary"><i class="fas fa-plus-circle me-2"></i> Report a New Issue</h4>
+                        <p class="text-secondary">If you are experiencing a technical problem or need assistance, submit a new incident ticket here.</p>
+                        <a href="{% url 'create_incident' %}" class="btn btn-primary mt-auto">
+                            Submit an Incident
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card p-4 shadow-sm h-100 border-secondary">
+                        <h4 class="fw-bold text-secondary"><i class="fas fa-list-check me-2"></i> Track Your Tickets</h4>
+                        <p class="text-secondary">View the status, history, and details of all incidents you have previously submitted.</p>
+                        <a href="{% url 'incident_list' %}" class="btn btn-outline-secondary mt-auto">
+                            View My Incidents
+                        </a>
+                    </div>
+                </div>
             </div>
             {% endif %}
 
