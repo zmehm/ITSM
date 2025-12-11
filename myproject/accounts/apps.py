@@ -1,4 +1,4 @@
-# accounts/apps.py
+# accounts/apps.py (The FINAL corrected version)
 
 from django.apps import AppConfig
 
@@ -9,5 +9,5 @@ class AccountsConfig(AppConfig):
     name = 'accounts'
 
     def ready(self):
-        # Import the signals file to ensure the signal receiver is registered
-        import accounts.signals
+        # The ready method should now be empty, as the signal logic is obsolete.
+        pass

@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Your Submitted Incidents</h2>
+    {% if incidents %}
+        <p>We found {{ incidents.count }} incident(s).</p>
+        {% else %}
+        <p>You have not submitted any incidents yet.</p>
+    {% endif %}
+
+    <a href="{% url 'create_incident' %}" class="btn btn-primary">Submit New Incident</a>
+</div>
+{% endblock %}

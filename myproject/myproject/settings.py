@@ -59,8 +59,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'mydb',  # Your database name
-        'USER': 'myuser',  # Your database user
-        'PASSWORD': 'zeesh1906',  # Your database password
+        'USER': 'zmehm',  # Your database user
+        'PASSWORD': 'zeeshan1906',  # Your database password
         'HOST': 'localhost',  # Database host
         'PORT': '5432',  # Database port
     }
@@ -80,6 +80,11 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+]
+
+AUTHENTICATION_BACKENDS = [
+    'accounts.backends.EmailBackend',  # <-- Your custom email logic
+    'django.contrib.auth.backends.ModelBackend', # <-- Keep the default as a fallback
 ]
 
 # Internationalization settings
@@ -113,10 +118,11 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 
 # Login redirect URL after successful login
 LOGIN_REDIRECT_URL = '/home/'
+LOGOUT_REDIRECT_URL = '/login/'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Configure for file handling (if required)
 MEDIA_URL = '/media/'  # URL for accessing media files
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Directory for storing media files
+MEDIA_ROOT = BASE_DIR / 'media' # Directory for storing media files

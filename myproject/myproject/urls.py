@@ -1,31 +1,37 @@
+# myproject/urls.py (FINAL CORRECTED VERSION)
+
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from django.views.generic import RedirectView
-from accounts import views  # Import the views from your accounts app
+from accounts import views 
+
+# CRITICAL IMPORTS for serving media files in development
+from django.conf import settings
+from django.conf.urls.static import static 
 
 urlpatterns = [
-    # 1. API ENDPOINT FIX: This path is needed for the {% url 'get_subcategories' 0 %} tag to resolve.
+    # API ENDPOINT
     path('api/subcategories/<int:category_id>/', views.get_subcategories, name='get_subcategories'),
     
-    # 2. INCIDENT LIST (Assuming this was an intentional path in your app)
-    path('incident_list/', views.incident_management, name='incident_list'),
-    
-    # --- Existing Project Paths ---
+    # --- Project Core Paths ---
     path('admin/', admin.site.urls),
-    
-    # Redirect root to login page
     path('', RedirectView.as_view(url='/login/', permanent=False)), 
     
-    # URL mappings for different views
-    path('login/', views.login_view, name='login'),
+    # --- Accounts App Paths ---
+    path('login/', views.login_view, name='login_view'), # Renamed for clarity if you need a specific name
+    path('logout/', views.logout_view, name='logout_view'), # Added logout path for completeness
     path('home/', views.home, name='home'),
     path('register/', views.register_employee, name='register_employee'),
+    path('password_reset/', views.password_reset, name='password_reset'),
     
-    # Incident creation view (Ensure this view is for creating incidents)
-    path('incident_management/', views.create_incident, name='incident_management'),
-    
+    # --- ITSM Paths ---
+    path('incident_management/', views.create_incident, name='create_incident'), # Renamed for clarity
+    path('incident_list/', views.incident_management, name='incident_list'), 
     path('problem_management/', views.problem_management, name='problem_management'),
     path('change_management/', views.change_management, name='change_management'),
     path('service_requests/', views.service_requests, name='service_requests'),
-    path('password_reset/', views.password_reset, name='password_reset'),
 ]
+
+# CRITICAL FIX: Only serve media files if DEBUG is True (development)
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

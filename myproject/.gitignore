@@ -1,0 +1,8 @@
+# Python Caches and Compiled Files
+__pycache__/
+*.pyc
+
+# Django specific files
+*.sqlite3
+/media
+/static
