@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}IT Support Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4 fw-bold">🛠️ IT Support Work Queue</h2>
+    <hr>
+
+    {# --- 1. OVERVIEW CARDS --- #}
+    <div class="row mb-4">
+        
+        {# Tickets assigned to me #}
+        <div class="col-md-4">
+            <div class="card text-white bg-info shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title fw-bold">{{ my_tickets|length }}</h5>
+                            <p class="card-text">Assigned to Me (Active)</p>
+                        </div>
+                        <i class="fas fa-user-tag fa-3x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {# Tickets in the general unassigned queue #}
+        <div class="col-md-4">
+            <div class="card text-white bg-danger shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title fw-bold">{{ unassigned_tickets|length }}</h5>
+                            <p class="card-text">Unassigned Queue (Action Needed)</p>
+                        </div>
+                        <i class="fas fa-exclamation-triangle fa-3x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {# Tickets Awaiting User Feedback #}
+        <div class="col-md-4">
+            <div class="card text-white bg-warning shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title fw-bold">{{ feedback_tickets|length }}</h5>
+                            <p class="card-text">Awaiting User Feedback</p>
+                        </div>
+                        <i class="fas fa-comment-dots fa-3x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# --- 2. MY ASSIGNED TICKETS (Tickets actively being worked on) --- #}
+    <h3 class="mt-5 mb-3 fw-bold text-info">My Active Tickets</h3>
+    
+    {% if my_tickets %}
+        <div class="card shadow-lg mb-5">
+            <div class="card-body p-0">
+                {% include 'accounts/includes/ticket_table.html' with tickets=my_tickets show_assignment=False show_action='resolve' %}
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center mt-4 mb-5">
+            You currently have no incidents assigned to you. Check the Unassigned Queue below!
+        </div>
+    {% endif %}
+
+
+    {# --- 3. UNASSIGNED QUEUE (General Workload) --- #}
+    <h3 class="mt-5 mb-3 fw-bold text-danger">Unassigned Queue</h3>
+    
+    {% if unassigned_tickets %}
+        <div class="card shadow-lg">
+            <div class="card-body p-0">
+                {% include 'accounts/includes/ticket_table.html' with tickets=unassigned_tickets show_assignment=True show_action='take' %}
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-success text-center mt-4">
+            The queue is clear! Great work, team.
+        </div>
+    {% endif %}
+
+</div>
+
+{# --- Create a Reusable Template for the Table (Next Step) --- #}
+{% endblock %}
+
+
+{# --- OPTIONAL NEXT STEP: Create a Reusable Ticket Table Template --- #}
+{# To keep the dashboards clean, we will create a partial template named: #}
+{# accounts/includes/ticket_table.html #}

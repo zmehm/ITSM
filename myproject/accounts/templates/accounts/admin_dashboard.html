@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Oversight{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4 fw-bold">📊 ITSM Administration & Reporting</h2>
+    <hr>
+
+    {# --- 1. KEY PERFORMANCE INDICATORS (KPIs) --- #}
+    <div class="row mb-5">
+        
+        {# Total Incidents Reported #}
+        <div class="col-md-3">
+            <div class="card text-white bg-dark shadow-lg">
+                <div class="card-body">
+                    <h5 class="card-title text-uppercase small">Total Incidents</h5>
+                    <div class="h1 fw-bold">{{ total_incidents }}</div>
+                    <p class="card-text small opacity-75">All tickets created to date.</p>
+                </div>
+            </div>
+        </div>
+        
+        {# Closed Incidents #}
+        <div class="col-md-3">
+            <div class="card text-white bg-success shadow-lg">
+                <div class="card-body">
+                    <h5 class="card-title text-uppercase small">Tickets Closed</h5>
+                    <div class="h1 fw-bold">{{ closed_count }}</div>
+                    <p class="card-text small opacity-75">Successfully resolved and accepted by user.</p>
+                </div>
+            </div>
+        </div>
+        
+        {# Resolved (Awaiting Feedback) #}
+        <div class="col-md-3">
+            <div class="card text-white bg-info shadow-lg">
+                <div class="card-body">
+                    <h5 class="card-title text-uppercase small">Awaiting User Feedback</h5>
+                    <div class="h1 fw-bold">{{ resolved_count }}</div>
+                    <p class="card-text small opacity-75">IT work is complete, awaiting acceptance.</p>
+                </div>
+            </div>
+        </div>
+        
+        {# CSAT Score (Satisfaction Rating) #}
+        <div class="col-md-3">
+            <div class="card text-white bg-primary shadow-lg">
+                <div class="card-body">
+                    <h5 class="card-title text-uppercase small">Satisfaction Score</h5>
+                    <div class="h1 fw-bold">{{ csat_score }}%</div>
+                    <p class="card-text small opacity-75">Tickets marked 'Satisfied' vs total feedback given.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# --- 2. ALL ACTIVE INCIDENTS LIST --- #}
+    <h3 class="mt-4 mb-3 fw-bold">All Incidents Overview (Active & Recent)</h3>
+
+    {% if all_incidents %}
+        <div class="card shadow-lg">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Ticket #</th>
+                                <th>Summary</th>
+                                <th>Reported By</th>
+                                <th>Assigned To</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for incident in all_incidents %}
+                            <tr>
+                                <td><a href="{% url 'incident_detail' incident.id %}" class="fw-bold">{{ incident.incident_number }}</a></td>
+                                <td>{{ incident.description|truncatechars:40 }}</td>
+                                <td>{{ incident.empID.get_full_name|default:incident.empID.username }}</td>
+                                <td>{{ incident.assigned_to.get_full_name|default:incident.assigned_to.username|default:"— Unassigned —" }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if incident.status == 'CLOSED' %}bg-success
+                                        {% elif incident.status == 'REOPENED' %}bg-danger
+                                        {% elif incident.status == 'NEW' %}bg-secondary
+                                        {% else %}bg-info
+                                        {% endif %}">
+                                        {{ incident.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ incident.get_priority_display }}</td>
+                                <td>
+                                    <a href="{% url 'incident_detail' incident.id %}" class="btn btn-sm btn-outline-dark">
+                                        Review
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center mt-4">
+            No incident records found in the system.
+        </div>
+    {% endif %}
+
+    {# Optional: Add a section for detailed CSAT reports #}
+
+</div>
+{% endblock %}

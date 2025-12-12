@@ -1,0 +1,58 @@
+{% load static %}
+<div class="table-responsive">
+    <table class="table table-striped table-hover mb-0">
+        <thead class="bg-light">
+            <tr>
+                <th>Ticket #</th>
+                <th>Summary</th>
+                <th>Priority</th>
+                <th>Status</th>
+                {% if show_assignment %}
+                <th>Reported By</th>
+                {% endif %}
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for incident in tickets %}
+            <tr>
+                <td><a href="{% url 'incident_detail' incident.id %}" class="fw-bold">{{ incident.incident_number }}</a></td>
+                <td>{{ incident.title|truncatechars:70 }}</td>
+                <td>
+                    <span class="badge 
+                        {% if incident.priority == 'high' %}bg-danger
+                        {% elif incident.priority == 'medium' %}bg-warning text-dark
+                        {% else %}bg-secondary
+                        {% endif %}">
+                        {{ incident.get_priority_display }}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge bg-secondary">{{ incident.get_status_display }}</span>
+                </td>
+                {% if show_assignment %}
+                <td>{{ incident.empID.get_full_name|default:incident.empID.username }}</td>
+                {% endif %}
+                <td style="min-width: 120px;">
+                    {% if show_action == 'take' %}
+                        {# Action for Unassigned Queue #}
+                        <a href="{% url 'take_incident' incident.id %}" class="btn btn-sm btn-success">
+                            <i class="fas fa-hand-paper"></i> Take
+                        </a>
+                    {% elif show_action == 'resolve' %}
+                        {# Action for My Assigned Tickets #}
+                        <a href="{% url 'resolve_incident' incident.id %}" class="btn btn-sm btn-danger">
+                            <i class="fas fa-check"></i> Resolve
+                        </a>
+                    {% else %}
+                        {# Default Action #}
+                        <a href="{% url 'incident_detail' incident.id %}" class="btn btn-sm btn-outline-info">
+                            View
+                        </a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Resolve Incident #{{ incident.incident_number }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4 fw-bold">📝 Resolve Incident: {{ incident.incident_number }}</h2>
+    <p class="text-secondary">Confirm the issue is fixed. Clicking "Submit Resolution" will capture the date/time and mark the ticket as awaiting user feedback.</p>
+    <hr>
+
+    <div class="row">
+        
+        {# --- LEFT COLUMN: INCIDENT DETAILS --- #}
+        <div class="col-md-7">
+            <div class="card shadow-lg mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0 fw-bold">Ticket Summary</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4 text-dark">Status:</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge bg-danger">{{ incident.get_status_display }}</span>
+                        </dd>
+                        <dt class="col-sm-4 text-dark">Reported By:</dt>
+                        <dd class="col-sm-8">{{ incident.empID.get_full_name|default:incident.empID.username }}</dd>
+
+                        <dt class="col-sm-4 text-dark">Created On:</dt>
+                        <dd class="col-sm-8">{{ incident.created_on|date:"M d, Y" }} at {{ incident.created_time|time:"H:i" }}</dd>
+
+                        <dt class="col-sm-4 text-dark">Description:</dt>
+                        <dd class="col-sm-8">{{ incident.description }}</dd>
+                    </dl>
+                    
+                    {% if incident.file_upload %}
+                        <div class="mt-3 p-3 border rounded">
+                            <i class="fas fa-paperclip me-2"></i> 
+                            Attachment: 
+                            <a href="{{ incident.file_upload.url }}" target="_blank" class="text-primary">View Attached File</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# --- RIGHT COLUMN: RESOLUTION ACTION --- #}
+        <div class="col-md-5">
+            <div class="card shadow-lg">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0 fw-bold">Final Resolution Confirmation</h5>
+                </div>
+                <div class="card-body">
+                    
+                    <p class="mb-4 text-center">
+                        Confirm you have completed all necessary steps to resolve Incident #{{ incident.incident_number }}.
+                    </p>
+
+                    <form method="POST" action="{% url 'resolve_incident' incident.id %}">
+                        {% csrf_token %}
+                        
+                        <div class="alert alert-warning text-center">
+                            This action will capture the current date/time and set the status to: 
+                            <span class="fw-bold">Awaiting User Feedback</span>.
+                        </div>
+
+                        <button type="submit" class="btn btn-success btn-lg w-100 mt-3">
+                            <i class="fas fa-check-circle me-2"></i> Submit Resolution & Await Feedback
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
