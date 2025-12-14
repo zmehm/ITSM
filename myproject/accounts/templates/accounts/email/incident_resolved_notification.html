@@ -1,0 +1,47 @@
+{# accounts/templates/accounts/email/incident_resolved_notification.html #}
+
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ticket Resolved: {{ incident.incident_number }}</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+    <div style="background-color: #ffffff; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+        
+        <h2 style="color: #28a745;">✅ Your Incident Has Been Resolved!</h2>
+        <hr style="border-top: 1px solid #eee;">
+
+        <p>Dear {{ incident.empID.first_name|default:incident.empID.username }},</p>
+        
+        <p>The technical team has completed the work on your incident and has marked it as **Resolved**. We are now awaiting your final feedback.</p>
+
+        <h3 style="color: #007bff;">Ticket Details</h3>
+        <ul style="list-style: none; padding: 0;">
+            <li><strong>Tracking Number:</strong> <span style="font-weight: bold;">{{ incident.incident_number }}</span></li>
+            {# FIX: Use description field, truncated #}
+            <li><strong>Summary:</strong> {{ incident.description|truncatechars:70 }}</li> 
+            <li><strong>Resolved By:</strong> {{ incident.assigned_to.get_full_name|default:"IT Support" }}</li>
+            <li><strong>Resolution Time:</strong> {{ incident.resolved_at|date:"M d, Y h:i A" }} IST</li>
+        </ul>
+
+        <h3 style="color: #dc3545;">Action Required</h3>
+        <p>Please click the link below to review the resolution and provide your feedback:</p>
+        
+        <p style="text-align: center; margin: 20px 0;">
+            {% url 'submit_feedback' incident.id as feedback_url %}
+            <a href="{{ request.scheme }}://{{ request.get_host }}{{ feedback_url }}" 
+               style="background-color: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+               Submit Feedback Now
+            </a>
+        </p>
+
+        <p>If you confirm the issue is fixed, the ticket will be **Closed**. If the issue persists, you can **Reopen** the ticket.</p>
+        
+        <p style="font-size: 12px; color: #777; margin-top: 30px;">
+            Thank you,<br>
+            ITSM Support Team
+        </p>
+    </div>
+</body>
+</html>

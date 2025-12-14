@@ -1,4 +1,4 @@
-# accounts/models.py
+# accounts/models.py (FINAL VERSION WITH HYBRID RESOLUTION FIELDS)
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser
@@ -105,7 +105,7 @@ class Incident(models.Model):
         ('NEW', 'New'),
         ('IN_PROGRESS', 'In Progress'),
         ('AWAITING_FEEDBACK', 'Resolved - Awaiting User Feedback'), # NEW STATE
-        ('REOPENED', 'Reopened by User'),                           # NEW STATE
+        ('REOPENED', 'Reopened by User'),                             # NEW STATE
         ('CLOSED', 'Closed'),
     ]
     
@@ -131,8 +131,12 @@ class Incident(models.Model):
     created_on = models.DateField(auto_now_add=True)
     created_time = models.TimeField(auto_now_add=True)
     assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_incidents')
-    resolved_on = models.DateField(null=True, blank=True)
-    resolved_time = models.TimeField(null=True, blank=True)
+    
+    # --- RESOLUTION TRACKING FIELDS (HYBRID FIX FOR TIMEZONES) ---
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    resolved_date = models.DateField(null=True, blank=True) 
+    # NOTE: The original resolved_on and resolved_time fields are REMOVED/OVERWRITTEN
+    
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='NEW') # Default changed to 'NEW' (uppercase)
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='medium')
 

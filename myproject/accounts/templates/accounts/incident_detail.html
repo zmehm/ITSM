@@ -9,6 +9,8 @@
     <hr>
 
     <div class="row">
+
+        {# --- LEFT COLUMN: CORE TICKET INFORMATION --- #}
         <div class="col-md-7">
             <div class="card shadow-lg mb-4">
                 <div class="card-header bg-dark text-white">
@@ -16,15 +18,17 @@
                 </div>
                 <div class="card-body">
 
+                    {# STATUS & PRIORITY ROW #}
                     <div class="d-flex justify-content-between mb-3 border-bottom pb-3">
                         <div>
                             <span class="text-uppercase small text-secondary">Status</span>
                             <h4 class="fw-bold">
-                                <span class="badge
+                                <span class="badge 
                                     {% if incident.status == 'CLOSED' %}bg-success
                                     {% elif incident.status == 'REOPENED' %}bg-danger
                                     {% elif incident.status == 'AWAITING_FEEDBACK' %}bg-warning
-                                    {% else %}bg-info{% endif %}">
+                                    {% else %}bg-info
+                                    {% endif %}">
                                     {{ incident.get_status_display }}
                                 </span>
                             </h4>
@@ -35,6 +39,7 @@
                         </div>
                     </div>
 
+                    {# DETAILS TABLE #}
                     <dl class="row">
                         <dt class="col-sm-3">Reported By:</dt>
                         <dd class="col-sm-9">{{ incident.empID.get_full_name|default:incident.empID.username }}</dd>
@@ -42,17 +47,23 @@
                         <dt class="col-sm-3">Assigned To:</dt>
                         <dd class="col-sm-9">
                             {% if incident.assigned_to %}
-                                {{ incident.assigned_to.get_full_name|default:incident.assigned_to.username }}
+                            {{ incident.assigned_to.get_full_name|default:incident.assigned_to.username }}
                             {% else %}
-                                <span class="text-danger fw-bold">Unassigned</span>
+                            <span class="text-danger fw-bold">Unassigned</span>
                             {% endif %}
                         </dd>
 
+                        {# FIXED CATEGORY DISPLAY: Cleaned up spacing and line break to prevent parsing error #}
                         <dt class="col-sm-3">Category:</dt>
-                        <dd class="col-sm-9">{{ incident.catID.name|default:"N/A" }} / {{ incident.subcatID.name|default:"N/A" }}</dd>
+                        <dd class="col-sm-9">
+                            {{ incident.catID.name|default:"N/A" }} / {{ incident.subcatID.name|default:"N/A" }}
+                        </dd>
 
+                        {# FIXED CREATED ON DISPLAY: Cleaned up spacing and line break to prevent parsing error #}
                         <dt class="col-sm-3">Created On:</dt>
-                        <dd class="col-sm-9">{{ incident.created_on|date:"M d, Y" }} at {{ incident.created_time|time:"H:i" }}</dd>
+                        <dd class="col-sm-9">
+                            {{ incident.created_on|date:"M d, Y" }} at {{ incident.created_time|time:"H:i" }}
+                        </dd>
                     </dl>
 
                     <h6 class="mt-4 fw-bold">Description</h6>
@@ -66,78 +77,90 @@
                     </div>
                     {% endif %}
 
-                    {% if incident.resolution_notes %}
-                    <h6 class="mt-4 fw-bold text-success">Resolution Notes</h6>
-                    <div class="alert alert-success p-3">{{ incident.resolution_notes }}</div>
-                    <small class="text-secondary">Resolved on {{ incident.resolved_on }}</small>
+                    {% if incident.resolved_at %}
+                    <h6 class="mt-4 fw-bold text-success">Resolution Details</h6>
+                    <div class="alert alert-success p-3">
+                        Technician **{{ incident.assigned_to.get_full_name|default:"[Unknown Agent]" }}** marked this ticket as resolved.
+                        
+                        {# Reference to resolution_notes field removed #}
+                        <p class="mt-2 mb-0 fst-italic">Resolution marked complete on {{ incident.resolved_date|date:"M d, Y" }}.</p> 
+                    </div>
+                    
+                    {# --- UPDATED RESOLUTION DATE/TIME DISPLAY (Timezone-Safe) --- #}
+                    <small class="text-secondary">
+                        Resolved on {{ incident.resolved_date|date:"M d, Y" }} 
+                        at {{ incident.resolved_at|date:"h:i A" }} 
+                        ({{ incident.resolved_at|date:"T" }})
+                    </small>
                     {% endif %}
                 </div>
             </div>
         </div>
 
+        {# --- RIGHT COLUMN: ACTIONS & FEEDBACK HISTORY --- #}
         <div class="col-md-5">
+
+            {# ACTION CARD (Changes based on role/status) #}
             <div class="card shadow-lg mb-4">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0 fw-bold">Actions</h5>
                 </div>
                 <div class="card-body">
-
                     {% if incident.status == 'NEW' and user.role == 'IT_SUPPORT' and not incident.assigned_to %}
-                        <p class="text-info fw-bold">This ticket is new and unassigned.</p>
-                        <a href="{% url 'take_incident' incident.id %}" class="btn btn-success w-100">
-                            <i class="fas fa-hand-paper me-2"></i> Take Ownership
-                        </a>
+                    <p class="text-info fw-bold">This ticket is new and unassigned.</p>
+                    <a href="{% url 'take_incident' incident.id %}" class="btn btn-success w-100">
+                        <i class="fas fa-hand-paper me-2"></i> Take Ownership
+                    </a>
 
                     {% elif incident.status == 'IN_PROGRESS' and incident.assigned_to == user %}
-                        <p class="text-info fw-bold">You are currently working on this ticket.</p>
-                        <a href="{% url 'resolve_incident' incident.id %}" class="btn btn-warning w-100">
-                            <i class="fas fa-check me-2"></i> Mark as Resolved
-                        </a>
+                    <p class="text-info fw-bold">You are currently working on this ticket.</p>
+                    <a href="{% url 'resolve_incident' incident.id %}" class="btn btn-warning w-100">
+                        <i class="fas fa-check me-2"></i> Mark as Resolved
+                    </a>
 
                     {% elif incident.status == 'AWAITING_FEEDBACK' and incident.empID == user %}
-                        <p class="text-danger fw-bold">Action Required: Your feedback is needed!</p>
-                        <a href="{% url 'submit_feedback' incident.id %}" class="btn btn-danger w-100">
-                            <i class="fas fa-comment-dots me-2"></i> Submit Satisfaction Feedback
-                        </a>
+                    <p class="text-danger fw-bold">Action Required: Your feedback is needed!</p>
+                    <a href="{% url 'submit_feedback' incident.id %}" class="btn btn-danger w-100">
+                        <i class="fas fa-comment-dots me-2"></i> Submit Satisfaction Feedback
+                    </a>
 
                     {% else %}
-                        <p class="text-secondary">No immediate actions available for this role or status.</p>
-                        {% if user.is_admin %}
-                        <a href="{% url 'admin_dashboard' %}" class="btn btn-sm btn-outline-dark">Return to Admin Dashboard</a>
-                        {% endif %}
+                    <p class="text-secondary">No immediate actions available for this role or status.</p>
+                    {% if user.is_admin %}
+                    <a href="{% url 'admin_dashboard' %}" class="btn btn-sm btn-outline-dark">Return to Admin
+                        Dashboard</a>
                     {% endif %}
-
+                    {% endif %}
                 </div>
             </div>
 
+            {# FEEDBACK HISTORY CARD #}
             <div class="card shadow-lg">
                 <div class="card-header bg-secondary text-white">
                     <h5 class="mb-0 fw-bold">Feedback History ({{ incident.feedback_history.count }})</h5>
                 </div>
-
                 <div class="list-group list-group-flush">
                     {% for feedback in incident.feedback_history.all %}
                     <div class="list-group-item">
-                        <p class="mb-1 fw-bold {% if feedback.is_satisfied %}text-success{% else %}text-danger{% endif %}">
+                        <p class="mb-1 fw-bold 
+                                {% if feedback.is_satisfied %}text-success{% else %}text-danger{% endif %}">
                             {% if feedback.is_satisfied %}
-                                <i class="fas fa-thumbs-up me-2"></i> User Satisfied (Closed)
+                            <i class="fas fa-thumbs-up me-2"></i> User Satisfied (Closed)
                             {% else %}
-                                <i class="fas fa-redo me-2"></i> User NOT Satisfied (Reopened)
+                            <i class="fas fa-redo me-2"></i> User NOT Satisfied (Reopened)
                             {% endif %}
                         </p>
-
                         <p class="mb-0 small fst-italic">{{ feedback.comments|default:"(No comments provided)" }}</p>
-
                         <small class="text-muted d-block text-end">
-                            {{ feedback.provided_at|date:"M d, Y H:i" }}
+                            {{ feedback.provided_at|date:"M d, Y h:i A" }}
                         </small>
                     </div>
                     {% empty %}
                     <div class="list-group-item text-center text-secondary">No feedback recorded yet.</div>
                     {% endfor %}
                 </div>
-
             </div>
+
         </div>
     </div>
 </div>

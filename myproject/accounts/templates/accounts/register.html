@@ -1,94 +1,405 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container">
-    <h2 class="mt-4">Register</h2>
-    <form method="POST">
-        {% csrf_token %}
+<style>
+    /* Hide the top bar and sidebar for register page */
+    .app-topbar,
+    .sidebar {
+        display: none !important;
+    }
 
-        <!-- First Name -->
-        <div class="mb-3">
-            <label for="first_name" class="form-label">First Name</label>
-            <input type="text" class="form-control" id="first_name" name="first_name" required>
-        </div>
+    /* Full screen register */
+    body, html {
+        height: 100%;
+        margin: 0;
+        overflow-x: hidden;
+    }
 
-        <!-- Last Name -->
-        <div class="mb-3">
-            <label for="last_name" class="form-label">Last Name</label>
-            <input type="text" class="form-control" id="last_name" name="last_name" required>
-        </div>
+    .layout {
+        margin: 0;
+        display: block;
+    }
 
-        <!-- Employee ID -->
-        <div class="mb-3">
-            <label for="EmpID" class="form-label">Employee ID</label>
-            <input type="text" class="form-control" id="EmpID" name="EmpID" required>
-        </div>
+    .content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
 
-        <!-- Email -->
-        <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" id="email" name="email" required>
-        </div>
+    /* Custom background */
+    .content-body {
+        padding: 2rem 0 !important;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        position: relative;
+        overflow-y: auto;
+    }
 
-        <!-- Phone Number -->
-        <div class="mb-3">
-            <label for="phone_number" class="form-label">Phone Number</label>
-            <input type="text" class="form-control" id="phone_number" name="phone_number" required>
-        </div>
+    /* Register card styling */
+    .register-container {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 900px;
+        padding: 1rem;
+    }
 
-        <!-- Date of Birth -->
-        <div class="mb-3">
-            <label for="date_of_birth" class="form-label">Date of Birth</label>
-            <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
-        </div>
+    .register-card {
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 2.5rem 3rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        animation: fadeInScale 0.6s ease-out;
+    }
 
-        <!-- Gender -->
-        <div class="mb-3">
-            <label for="Gender" class="form-label">Gender</label>
-            <select class="form-control" id="Gender" name="Gender" required>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-            </select>
-        </div>
+    @keyframes fadeInScale {
+        from {
+            opacity: 0;
+            transform: scale(0.9) translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
 
-        <!-- Department -->
-        <div class="mb-3">
-            <label for="Dept" class="form-label">Department</label>
-            <input type="text" class="form-control" id="Dept" name="Dept" required>
-        </div>
+    /* Title */
+    .register-title {
+        font-size: 2rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
 
-        <!-- Grade -->
-        <div class="mb-3">
-            <label for="Grade" class="form-label">Grade</label>
-            <input type="text" class="form-control" id="Grade" name="Grade" required>
-        </div>
+    .register-subtitle {
+        text-align: center;
+        color: #64748b;
+        font-size: 0.95rem;
+        margin-bottom: 2rem;
+    }
 
-        <!-- Discipline -->
-        <div class="mb-3">
-            <label for="Discipline" class="form-label">Discipline</label>
-            <input type="text" class="form-control" id="Discipline" name="Discipline" required>
-        </div>
+    /* Form styling */
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
 
-        <!-- Floor -->
-        <div class="mb-3">
-            <label for="Floor" class="form-label">Floor</label>
-            <input type="text" class="form-control" id="Floor" name="Floor" required>
-        </div>
+    .form-group {
+        position: relative;
+    }
 
-        <!-- Active Status -->
-        <div class="mb-3">
-            <label for="Active" class="form-label">Active</label>
-            <input type="checkbox" class="form-check-input" id="Active" name="Active" checked>
-        </div>
+    .form-group.full-width {
+        grid-column: 1 / 3;
+    }
 
-        <!-- Password -->
-        <div class="mb-3">
-            <label for="password" class="form-label">Password</label>
-            <input type="password" class="form-control" id="password" name="password" required>
-        </div>
+    .form-label {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        display: block;
+    }
 
-        <!-- Register Button -->
-        <button type="submit" class="btn btn-primary">Register</button>
-    </form>
+    .form-control,
+    .form-select {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        background: white;
+        width: 100%;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        outline: none;
+        transform: translateY(-2px);
+    }
+
+    .form-control:hover,
+    .form-select:hover {
+        border-color: #cbd5e1;
+    }
+
+    /* Checkbox styling */
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-check-input {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #e2e8f0;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .form-check-input:checked {
+        background-color: #667eea;
+        border-color: #667eea;
+    }
+
+    .form-check-label {
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 0.875rem;
+        cursor: pointer;
+    }
+
+    /* Submit button */
+    .btn-register {
+        width: 100%;
+        padding: 0.875rem;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: white;
+        margin-top: 1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        cursor: pointer;
+    }
+
+    .btn-register:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        background: linear-gradient(135deg, #764ba2, #667eea);
+    }
+
+    .btn-register:active {
+        transform: translateY(-1px);
+    }
+
+    /* Links */
+    .register-link {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .register-link:hover {
+        color: #764ba2;
+        text-decoration: underline;
+    }
+
+    .text-center {
+        text-align: center;
+    }
+
+    .mt-3 {
+        margin-top: 1rem;
+    }
+
+    /* Input icons */
+    .input-icon {
+        position: absolute;
+        right: 1rem;
+        top: 2.4rem;
+        color: #94a3b8;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+
+    .input-icon:hover {
+        color: #667eea;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+        }
+
+        .form-group.full-width {
+            grid-column: 1;
+        }
+
+        .register-card {
+            padding: 2rem 1.5rem;
+        }
+
+        .register-title {
+            font-size: 1.75rem;
+        }
+    }
+
+    /* Hide scrollbar */
+    body::-webkit-scrollbar {
+        display: none;
+    }
+
+    body {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+</style>
+
+<div class="register-container">
+    <div class="register-card">
+        <!-- Title -->
+        <h1 class="register-title">Create Account</h1>
+        <p class="register-subtitle">Join ITSM Portal - Fill in your details below</p>
+
+        <!-- Register Form -->
+        <form method="POST">
+            {% csrf_token %}
+
+            <!-- Row 1: First Name & Last Name -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="first_name" class="form-label">First Name</label>
+                    <input type="text" class="form-control" id="first_name" name="first_name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="last_name" class="form-label">Last Name</label>
+                    <input type="text" class="form-control" id="last_name" name="last_name" required>
+                </div>
+            </div>
+
+            <!-- Row 2: Employee ID & Email -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="EmpID" class="form-label">Employee ID</label>
+                    <input type="text" class="form-control" id="EmpID" name="EmpID" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+            </div>
+
+            <!-- Row 3: Phone Number & Date of Birth -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="phone_number" class="form-label">Phone Number</label>
+                    <input type="text" class="form-control" id="phone_number" name="phone_number" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="date_of_birth" class="form-label">Date of Birth</label>
+                    <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
+                </div>
+            </div>
+
+            <!-- Row 4: Gender & Department -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="Gender" class="form-label">Gender</label>
+                    <select class="form-select form-control" id="Gender" name="Gender" required>
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="Dept" class="form-label">Department</label>
+                    <input type="text" class="form-control" id="Dept" name="Dept" required>
+                </div>
+            </div>
+
+            <!-- Row 5: Grade & Discipline -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="Grade" class="form-label">Grade</label>
+                    <input type="text" class="form-control" id="Grade" name="Grade" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="Discipline" class="form-label">Discipline</label>
+                    <input type="text" class="form-control" id="Discipline" name="Discipline" required>
+                </div>
+            </div>
+
+            <!-- Row 6: Floor & Active Status -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="Floor" class="form-label">Floor</label>
+                    <input type="text" class="form-control" id="Floor" name="Floor" required>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-check" style="margin-top: 2rem;">
+                        <input type="checkbox" class="form-check-input" id="Active" name="Active" checked>
+                        <label for="Active" class="form-check-label">Active Employee</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 7: Password (Full Width) -->
+            <div class="form-row">
+                <div class="form-group full-width">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                    <i class="fa-solid fa-eye input-icon" id="togglePassword"></i>
+                </div>
+            </div>
+
+            <!-- Submit button -->
+            <button type="submit" class="btn-register">
+                <i class="fa-solid fa-user-plus me-2"></i> Create Account
+            </button>
+
+            <!-- Login link -->
+            <div class="text-center mt-3">
+                Already have an account? <a href="{% url 'login_view' %}" class="register-link">Sign In</a>
+            </div>
+        </form>
+    </div>
 </div>
+
+<script>
+    // Toggle password visibility
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Toggle icon
+            if (type === 'password') {
+                this.classList.remove('fa-eye-slash');
+                this.classList.add('fa-eye');
+            } else {
+                this.classList.remove('fa-eye');
+                this.classList.add('fa-eye-slash');
+            }
+        });
+    }
+
+    // Add input animations
+    document.querySelectorAll('.form-control, .form-select').forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            this.parentElement.classList.remove('focused');
+        });
+    });
+</script>
 {% endblock %}

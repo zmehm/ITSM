@@ -5,24 +5,38 @@ from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError 
 from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.decorators.cache import never_cache
 from django.utils import timezone
-from django.db.models import Q # Added for better query handling
+from django.db.models import Q 
+
+# --- Email and Template Imports ---
+from django.template.loader import render_to_string 
+from django.core.mail import EmailMessage
+# ----------------------------------
 
 # --- Local Imports ---
-# NOTE: Removed ResolutionForm import as it is no longer used in the simplified workflow
 from .forms import EmployeeRegistrationForm, ProfileCompletionForm, IncidentForm, FeedbackForm
 from .models import Category, SubCategory, Incident, TicketFeedback 
 User = get_user_model() 
 
-# --- UTILITY FUNCTION FOR ROLE CHECKING ---
+# =====================================================================
+# 0. UTILITY FUNCTIONS & ROLE CHECK (DEFINED FIRST TO AVOID NAMEERROR)
+# =====================================================================
+
+def format_ticket_count(count, limit=1000):
+    """Formats the count: '1000+' for large numbers, otherwise the exact count."""
+    if count >= limit:
+        # Use f-string formatting for thousands separator
+        return f"{limit:,.0f}+"
+    return str(count)
+
+
 def role_required(role):
     """Decorator to restrict view access based on user role."""
     def decorator(view_func):
         @login_required
         def _wrapped_view(request, *args, **kwargs):
-            # Check if the user's role matches the required role
             if not hasattr(request.user, 'role') or request.user.role != role:
                 messages.error(request, "Access denied. You do not have permission to view this page.")
                 return redirect('home')
@@ -30,9 +44,20 @@ def role_required(role):
         return _wrapped_view
     return decorator
 
+def is_support(user):
+    """Helper function to check if user is IT Support."""
+    return user.is_authenticated and user.role == 'IT_SUPPORT'
+
+# Utility for AJAX
+def get_subcategories(request, category_id):
+    """Returns subcategories for a given category ID as JSON (for AJAX)."""
+    subcategories = SubCategory.objects.filter(category_id=category_id, active=True).values('id', 'name')
+    data = {subcat['id']: subcat['name'] for subcat in subcategories}
+    return JsonResponse(data)
+
 
 # =====================================================================
-# 1. AUTHENTICATION & UTILITY VIEWS
+# 1. AUTHENTICATION & GLOBAL VIEWS
 # =====================================================================
 
 def register_employee(request):
@@ -91,12 +116,6 @@ def password_reset(request):
         form = PasswordResetForm()
     return render(request, 'accounts/password_reset.html', {'form': form})
 
-# Utility for AJAX
-def get_subcategories(request, category_id):
-    subcategories = SubCategory.objects.filter(category_id=category_id, active=True).values('id', 'name')
-    data = {subcat['id']: subcat['name'] for subcat in subcategories}
-    return JsonResponse(data)
-
 
 # =====================================================================
 # 2. ROLE-BASED LANDING PAGE (CENTRAL HOME ROUTER)
@@ -104,7 +123,7 @@ def get_subcategories(request, category_id):
 
 @login_required
 def home(request):
-    # Profile Completion Check
+    # Profile Completion Check (Logic kept concise)
     if not request.user.EmpID or not request.user.Dept or not request.user.Grade or not request.user.Discipline:
         if request.method == 'POST':
             form = ProfileCompletionForm(request.POST, instance=request.user) 
@@ -130,7 +149,7 @@ def home(request):
 
 
 # =====================================================================
-# 3. ROLE-SPECIFIC DASHBOARDS
+# 3. ROLE-SPECIFIC DASHBOARDS (Metric Hubs)
 # =====================================================================
 
 @login_required
@@ -139,11 +158,14 @@ def user_dashboard(request):
     incidents = Incident.objects.filter(empID=request.user).order_by('-created_on', '-created_time')
     awaiting_feedback = incidents.filter(status='AWAITING_FEEDBACK')
     
+    # Calculate Open/Active Count in the View
+    open_active_count = incidents.exclude(status__in=['CLOSED', 'AWAITING_FEEDBACK']).count()
+
     return render(request, 'accounts/user_dashboard.html', {
         'incidents': incidents,
         'awaiting_feedback': awaiting_feedback,
+        'open_active_count': open_active_count, 
     })
-
 
 @login_required
 @role_required('IT_SUPPORT')
@@ -161,9 +183,15 @@ def support_dashboard(request):
     feedback_tickets = Incident.objects.filter(status='AWAITING_FEEDBACK')
 
     context = {
+        # Pass the raw lists for the detailed tables later
         'my_tickets': my_tickets,
         'unassigned_tickets': unassigned_tickets,
         'feedback_tickets': feedback_tickets,
+        
+        # Pass the formatted count strings for the dashboard cards (NEW)
+        'unassigned_count_formatted': format_ticket_count(unassigned_tickets.count()),
+        'my_tickets_count_formatted': format_ticket_count(my_tickets.count()),
+        'feedback_count_formatted': format_ticket_count(feedback_tickets.count()),
     }
     return render(request, 'accounts/support_dashboard.html', context)
 
@@ -185,14 +213,65 @@ def admin_dashboard(request):
         'closed_count': closed_count,
         'resolved_count': resolved_count,
         'csat_score': round(csat_score, 2),
-        # Ensure we use correct related name for empID/reported_by based on your model
         'all_incidents': Incident.objects.all().select_related('empID', 'assigned_to').order_by('-created_on'),
     }
     return render(request, 'accounts/admin_dashboard.html', context)
 
 
 # =====================================================================
-# 4. INCIDENT WORKFLOW VIEWS
+# 4. DEDICATED SUPPORT QUEUE VIEWS (New: Separate Pages)
+# =====================================================================
+
+@login_required
+@user_passes_test(is_support)
+def unassigned_queue_view(request):
+    """Dedicated view for Unassigned tickets (NEW/REOPENED)."""
+    tickets = Incident.objects.filter(assigned_to__isnull=True, status__in=['NEW', 'REOPENED']).order_by('-priority', 'created_on')
+    context = {
+        'tickets': tickets,
+        'queue_name': 'Unassigned Triage Queue',
+        'queue_color': 'danger',
+        'queue_icon': 'fa-fire',
+        'is_support_view': True,
+        'ticket_count_formatted': format_ticket_count(tickets.count()), # UPDATED
+    }
+    return render(request, 'accounts/dedicated_queue.html', context)
+
+@login_required
+@user_passes_test(is_support)
+def my_active_tickets_view(request):
+    """Dedicated view for tickets assigned to the current support agent (IN_PROGRESS/PENDING_INFO)."""
+    tickets = Incident.objects.filter(assigned_to=request.user).exclude(status__in=['AWAITING_FEEDBACK', 'CLOSED']).order_by('-priority', 'created_on')
+    context = {
+        'tickets': tickets,
+        'queue_name': 'My Active Workload',
+        'queue_color': 'primary',
+        'queue_icon': 'fa-helmet-safety',
+        'is_support_view': True,
+        'is_my_tickets_view': True,
+        'ticket_count_formatted': format_ticket_count(tickets.count()), # UPDATED
+    }
+    return render(request, 'accounts/dedicated_queue.html', context)
+
+@login_required
+@user_passes_test(is_support)
+def feedback_queue_view(request):
+    """Dedicated view for tickets awaiting user confirmation (AWAITING_FEEDBACK)."""
+    tickets = Incident.objects.filter(status='AWAITING_FEEDBACK').order_by('created_on')
+    context = {
+        'tickets': tickets,
+        'queue_name': 'Awaiting User Feedback',
+        'queue_color': 'warning', # Using Bootstrap's 'warning' class for the yellow/brown look
+        'queue_icon': 'fa-hourglass-half',
+        'is_support_view': True,
+        'is_feedback_queue': True,
+        'ticket_count_formatted': format_ticket_count(tickets.count()), # UPDATED
+    }
+    return render(request, 'accounts/dedicated_queue.html', context)
+
+
+# =====================================================================
+# 5. INCIDENT WORKFLOW VIEWS (CRUD & Status Changes)
 # =====================================================================
 
 @login_required
@@ -241,24 +320,49 @@ def take_incident(request, incident_id):
 @role_required('IT_SUPPORT')
 def resolve_incident(request, incident_id):
     """
-    Handles IT Support marking a ticket as resolved (form-less confirmation). 
-    Captures date/time and sets the status to AWAITING_FEEDBACK.
+    Handles IT Support marking a ticket as resolved, updates the status to 
+    AWAITING_FEEDBACK, and sends an email notification to the user.
     """
     
     incident = get_object_or_404(Incident, id=incident_id, assigned_to=request.user)
 
     if request.method == 'POST':
         
-        # Resolution Logic (No form required)
+        current_time_aware = timezone.now()
+        
+        # Resolution Logic
         incident.status = 'AWAITING_FEEDBACK'
-        incident.resolved_on = timezone.now().date()
-        incident.resolved_time = timezone.now().time()
+        incident.resolved_at = current_time_aware 
+        incident.resolved_date = current_time_aware.date() 
         incident.save()
         
-        messages.success(request, f"Incident {incident.incident_number} marked as resolved. Awaiting user feedback.")
+        # ------------------- EMAIL NOTIFICATION LOGIC -------------------
+        try:
+            context = {
+                'incident': incident,
+                'request': request, 
+            }
+            
+            email_content = render_to_string('accounts/email/incident_resolved_notification.html', context)
+            
+            email = EmailMessage(
+                subject=f"✅ Incident Resolved: {incident.incident_number} - {incident.description[:40]}...",
+                body=email_content,
+                to=[incident.empID.email], # Sends to the user who reported the incident
+            )
+            email.content_subtype = "html" 
+            email.send()
+            
+            messages.success(request, f"Incident {incident.incident_number} marked as resolved. Notification email sent to user.")
+            
+        except Exception as e:
+            # Fallback for email failure 
+            print(f"Error sending resolution email for {incident.incident_number}: {e}")
+            messages.warning(request, f"Incident resolved, but failed to send email notification to user. Error: {e}")
+        # ------------------- END EMAIL NOTIFICATION LOGIC -------------------
+        
         return redirect('support_dashboard')
 
-    # Renders the confirmation template
     return render(request, 'accounts/incident_detail_support.html', {'incident': incident})
 
 
@@ -327,7 +431,10 @@ def submit_feedback(request, incident_id):
     
     return render(request, 'accounts/incident_detail_feedback.html', {'ticket': ticket, 'form': form})
 
-# Remaining stub views 
+# =====================================================================
+# 6. STUB VIEWS (For Sidebar Navigation)
+# =====================================================================
+
 @login_required
 def problem_management(request):
     return render(request, 'accounts/problem_management.html')

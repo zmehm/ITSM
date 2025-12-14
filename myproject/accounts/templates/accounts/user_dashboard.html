@@ -5,8 +5,7 @@
 
 {% block content %}
 <div class="container-fluid">
-    <h2 class="mb-4 fw-bold">👋 Welcome to the ITSM Portal, {{ user.first_name|default:user.username }}!</h2>
-    <hr>
+
 
     {# --- 1. CALL TO ACTION: CREATE INCIDENT --- #}
     <div class="row mb-5">
@@ -28,6 +27,21 @@
     {# --- 2. TICKET SUMMARY CARDS --- #}
     <div class="row mb-4">
         
+        {# Tickets Awaiting Feedback (Action Required!) #}
+        <div class="col-md-4">
+            <div class="card text-white bg-danger shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title fw-bold">{{ awaiting_feedback|length }}</h5>
+                            <p class="card-text">Awaiting My Feedback</p>
+                        </div>
+                        <i class="fas fa-bell fa-3x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {# Total Incidents Reported #}
         <div class="col-md-4">
             <div class="card text-white bg-warning shadow-sm">
@@ -43,47 +57,24 @@
             </div>
         </div>
         
-        {# Tickets Awaiting Feedback (Action Required!) #}
+        {# Tickets In Progress (FIXED DISPLAY) #}
         <div class="col-md-4">
-            <div class="card text-white bg-danger shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="card-title fw-bold">{{ awaiting_feedback|length }}</h5>
-                            <p class="card-text">Awaiting My Feedback</p>
-                        </div>
-                        <i class="fas fa-bell fa-3x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        {# Tickets In Progress (FIXED LOGIC - using standard template tags) #}
-        <div class="col-md-4">
-            {# Calculate open/active count using a standard loop #}
-            {% with open_count=0 %}
-                {% for incident in incidents %}
-                    {% if incident.status == 'NEW' or incident.status == 'IN_PROGRESS' or incident.status == 'REOPENED' %}
-                        {# The |add filter IS a built-in Django filter #}
-                        {% with open_count=open_count|add:1 %}{% endwith %}
-                    {% endif %}
-                {% endfor %}
             <div class="card text-white bg-info shadow-sm">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h5 class="card-title fw-bold">{{ open_count }}</h5>
+                            {# Uses the pre-calculated count from the view #}
+                            <h5 class="card-title fw-bold">{{ open_active_count }}</h5> 
                             <p class="card-text">Currently Open/Active</p>
                         </div>
                         <i class="fas fa-tools fa-3x"></i>
                     </div>
                 </div>
             </div>
-            {% endwith %}
         </div>
     </div>
 
-    {# --- 3. ACTIVE TICKET LIST --- #}
+    {# --- 3. ACTIVE TICKET LIST (ENHANCED TABLE) --- #}
     <h3 class="mt-5 mb-3 fw-bold">My Recent Tickets</h3>
 
     {% if incidents %}
@@ -95,9 +86,11 @@
                             <tr>
                                 <th>Ticket #</th>
                                 <th>Summary</th>
-                                <th>Created On</th>
+                                <th>Assigned To</th>
                                 <th>Priority</th>
                                 <th>Status</th>
+                                <th>Created On</th>
+                                <th>Resolved At</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -105,8 +98,17 @@
                             {% for incident in incidents %}
                             <tr>
                                 <td><a href="{% url 'incident_detail' incident.id %}" class="fw-bold">{{ incident.incident_number }}</a></td>
-                                <td>{{ incident.description|truncatechars:70 }}</td>
-                                <td>{{ incident.created_on|date:"M d, Y" }}</td>
+                                <td>{{ incident.description|truncatechars:40 }}</td>
+                                
+                                {# ADDED: Assigned To #}
+                                <td>
+                                    {% if incident.assigned_to %}
+                                        {{ incident.assigned_to.get_full_name|default:incident.assigned_to.username }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                
                                 <td>
                                     <span class="badge 
                                         {% if incident.priority == 'high' %}bg-danger
@@ -116,9 +118,31 @@
                                         {{ incident.get_priority_display }}
                                     </span>
                                 </td>
+                                
                                 <td>
-                                    <span class="badge bg-secondary">{{ incident.get_status_display }}</span>
+                                    {# ENHANCED STATUS BADGE LOGIC #}
+                                    <span class="badge 
+                                        {% if incident.status == 'CLOSED' %}bg-success
+                                        {% elif incident.status == 'REOPENED' %}bg-danger
+                                        {% elif incident.status == 'AWAITING_FEEDBACK' %}bg-warning text-dark
+                                        {% elif incident.status == 'NEW' %}bg-dark
+                                        {% else %}bg-info
+                                        {% endif %}">
+                                        {{ incident.get_status_display }}
+                                    </span>
                                 </td>
+                                
+                                <td>{{ incident.created_on|date:"M d, Y" }}</td>
+                                
+                                {# ADDED: Resolved At (Timezone Safe) #}
+                                <td>
+                                    {% if incident.resolved_at %}
+                                        <span class="text-success">{{ incident.resolved_at|date:"M d, h:i A" }}</span>
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                
                                 <td>
                                     {% if incident.status == 'AWAITING_FEEDBACK' %}
                                         <a href="{% url 'submit_feedback' incident.id %}" class="btn btn-sm btn-danger">
@@ -144,5 +168,4 @@
     {% endif %}
 
 </div>
-
 {% endblock %}

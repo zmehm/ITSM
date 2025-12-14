@@ -10,7 +10,7 @@ SECRET_KEY = 'django-insecure-8s!hb(j^pv$4jk+g7i#wbk%4_u=lkzrsgo+9xtno(*2j2m76b+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']  # Change this when moving to production
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -18,8 +18,8 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',  # Static files app
-    'accounts',  # Your custom app
+    'django.contrib.staticfiles',
+    'accounts',
 ]
 
 MIDDLEWARE = [
@@ -46,11 +46,10 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
-            'debug': True,  # This will show detailed error messages for template loading
+            'debug': True,
         },
     },
 ]
-
 
 WSGI_APPLICATION = 'myproject.wsgi.application'
 
@@ -58,11 +57,11 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'mydb',  # Your database name
-        'USER': 'zmehm',  # Your database user
-        'PASSWORD': 'zeeshan1906',  # Your database password
-        'HOST': 'localhost',  # Database host
-        'PORT': '5432',  # Database port
+        'NAME': 'mydb',
+        'USER': 'zmehm',
+        'PASSWORD': 'zeeshan1906',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
@@ -83,46 +82,54 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTHENTICATION_BACKENDS = [
-    'accounts.backends.DualFieldBackend',  # <-- Your custom email logic
-    'django.contrib.auth.backends.ModelBackend', # <-- Keep the default as a fallback
+    'accounts.backends.DualFieldBackend',
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 # Internationalization settings
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
+TIME_ZONE = 'Asia/Kolkata'
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = '/static/'  # URL for serving static files
-
-# Use this for collecting static files in production
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),  # Add static folder
+    os.path.join(BASE_DIR, 'static'),
 ]
-
-# Directory for collected static files in production
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# --- SESSION CONFIGURATION FOR LOGOUT ON BROWSER CLOSE ---
-# If True, the session cookie expires when the user closes their browser.
+# SESSION CONFIGURATION
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-
-# Ensures session data is saved on every request, which is helpful when 
-# modifying session expiration logic like this.
 SESSION_SAVE_EVERY_REQUEST = True
-# -----------------------------------------------------------
 
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
-# Login redirect URL after successful login
+# Login redirect URL
 LOGIN_REDIRECT_URL = '/home/'
 LOGOUT_REDIRECT_URL = '/login/'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Configure for file handling (if required)
-MEDIA_URL = '/media/'  # URL for accessing media files
-MEDIA_ROOT = BASE_DIR / 'media' # Directory for storing media files
+# Media file handling
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+# Gmail SMTP Settings
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+# Your IT Support Email Address
+EMAIL_HOST_USER = 'guts6929@gmail.com'
+
+# IMPORTANT: Replace this with the Google App Password, NOT your regular password.
+EMAIL_HOST_PASSWORD = 'tyuc plda jaob mnsh' 
+
+# Default email address for sending notifications
+DEFAULT_FROM_EMAIL = 'ITSM Support <guts6929@gmail.com>'
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
