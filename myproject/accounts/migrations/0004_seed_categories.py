@@ -5,10 +5,8 @@ def create_categories_and_subcategories(apps, schema_editor):
     SubCategory = apps.get_model('accounts', 'SubCategory')
     CustomUser = apps.get_model('accounts', 'CustomUser')
     
-    try:
-        creator = CustomUser.objects.filter(is_superuser=True).first()
-    except:
-        creator = None
+    # Safely get a creator (the first superuser found)
+    creator = CustomUser.objects.filter(is_superuser=True).first()
 
     data = {
         'Hardware': ['Laptop', 'Desktop', 'Printer', 'Monitor', 'Keyboard', 'Mouse'],
@@ -18,18 +16,16 @@ def create_categories_and_subcategories(apps, schema_editor):
     }
 
     for cat_name, subcat_list in data.items():
-        category = Category.objects.create(
+        category, created = Category.objects.get_or_create(
             name=cat_name,
-            active=True,
-            created_by=creator
+            defaults={'active': True, 'created_by': creator}
         )
         
         for subcat_name in subcat_list:
-            SubCategory.objects.create(
+            SubCategory.objects.get_or_create(
                 category=category,
                 name=subcat_name,
-                active=True,
-                created_by=creator
+                defaults={'active': True, 'created_by': creator}
             )
 
 def reverse_categories_and_subcategories(apps, schema_editor):
@@ -39,7 +35,8 @@ def reverse_categories_and_subcategories(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0001_initial'),
+        # This MUST match your last migration filename exactly
+        ('accounts', '0003_department_discipline_grade_subsidiary_and_more'),
     ]
 
     operations = [

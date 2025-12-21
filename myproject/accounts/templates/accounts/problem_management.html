@@ -1,32 +1,109 @@
-{% extends 'accounts/home.html' %}
+{% extends 'base.html' %}
 
-{% block dashboard_content %}
-<h3>Problem Management</h3>
-<div class="row">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h4>Problem Details</h4>
+{% block title %}Problem Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="dashboard-title"><i class="fa-solid fa-microscope me-2"></i> Problem Management & KEDB</h2>
+        <div class="btn-group">
+            <button class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-download me-1"></i> Export Report</button>
+            <button class="btn btn-primary btn-sm"><i class="fa-solid fa-plus me-1"></i> Log New Problem</button>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 text-success fw-bold"><i class="fa-solid fa-chart-line me-2"></i> Recurring Incident Patterns (Problem Cases)</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Case Name</th>
+                            <th>Root Cause Category</th>
+                            <th>Frequency Count</th>
+                            <th>Status</th>
+                            <th>First Detected</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for case in problem_cases %}
+                        <tr>
+                            <td><strong>{{ case.name }}</strong></td>
+                            <td>{{ case.rc_catID.name }}</td>
+                            <td>
+                                <span class="badge {% if case.freq_count > 5 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                                    {{ case.freq_count }} Occurrences
+                                </span>
+                            </td>
+                            <td>
+                                {% if case.active %}
+                                <span class="text-success"><i class="fa-solid fa-circle-check me-1"></i> Active Monitor</span>
+                                {% else %}
+                                <span class="text-muted">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ case.detected_on|default:"---" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-center py-4">No recurring cases identified yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-            <div class="card-body">
-                <!-- Example Problem Data -->
-                <ul class="list-group">
-                    <li class="list-group-item">
-                        <strong>Problem ID: </strong>#9876
-                        <br>
-                        <strong>Status: </strong>Resolved
-                        <br>
-                        <strong>Priority: </strong>Critical
-                    </li>
-                    <li class="list-group-item">
-                        <strong>Problem ID: </strong>#9877
-                        <br>
-                        <strong>Status: </strong>Investigating
-                        <br>
-                        <strong>Priority: </strong>High
-                    </li>
-                </ul>
-                <a href="#" class="btn btn-primary mt-3 w-100">View All Problems</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 text-primary fw-bold"><i class="fa-solid fa-database me-2"></i> Problem Records & Root Cause Analysis</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th>Known Issue</th>
+                            <th>Status</th>
+                            <th>Restoration Delay</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for problem in problems %}
+                        <tr>
+                            <td>#{{ problem.id }}</td>
+                            <td>{{ problem.description|truncatewords:10 }}</td>
+                            <td>{{ problem.root_cause_catID.name }}</td>
+                            <td>
+                                {% if problem.known_issue %}
+                                <span class="badge bg-info text-dark">KEDB Entry</span>
+                                {% else %}
+                                <span class="text-muted small">Investigation</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {% if problem.status == 'open' %}bg-danger{% elif problem.status == 'in_progress' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                                    {{ problem.status|upper }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if problem.delays %}
+                                <span class="fw-bold text-danger">{{ problem.delays }} Days</span>
+                                {% else %}
+                                <span class="text-muted">In Progress</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6" class="text-center py-4">No problem records found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

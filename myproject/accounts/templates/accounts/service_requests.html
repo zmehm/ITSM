@@ -1,25 +1,97 @@
-{% extends 'accounts/home.html' %}
+{% extends 'base.html' %}
 
-{% block dashboard_content %}
-<h3>Service Requests</h3>
-<div class="row">
-    {% for request in requests %}
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5>Request ID: {{ request.request_id }}</h5>
-            </div>
-            <div class="card-body">
-                <p><strong>Status:</strong> {{ request.status }}</p>
-                <p><strong>Request Type:</strong> {{ request.request_type }}</p>
-                <p><strong>Requested By:</strong> {{ request.requested_by }}</p>
-                <p><strong>Requested On:</strong> {{ request.requested_on }}</p>
+{% block title %}Submit Service Request{% endblock %}
 
-                <!-- Button to view full details (you can link to another page for detailed view) -->
-                <a href="#" class="btn btn-primary w-100 mt-3">View Request</a>
-            </div>
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-success text-white text-center">
+            <h4 class="mb-0"><i class="fa-solid fa-concierge-bell"></i> New Service Request</h4>
+        </div>
+        <div class="card-body">
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form action="{% url 'service_requests' %}" method="POST">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <div class="form-group mb-3">
+                    <label for="{{ form.catID.id_for_label }}" class="form-label"><b>{{ form.catID.label }}</b></label>
+                    {{ form.catID }}
+                    <div class="form-text">e.g., New hardware/software</div>
+                    {% for error in form.catID.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="{{ form.subcatID.id_for_label }}" class="form-label"><b>{{ form.subcatID.label }}</b></label>
+                    {{ form.subcatID }}
+                    <div class="form-text">e.g., Account access/password reset</div>
+                    {% for error in form.subcatID.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+
+                <div class="form-group mb-4">
+                    <label for="{{ form.description.id_for_label }}" class="form-label"><b>Brief Description</b></label>
+                    {{ form.description }}
+                    <div class="form-text">Limit to 100 characters.</div>
+                    {% for error in form.description.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-success btn-lg w-100">
+                        Submit Request
+                    </button>
+                    <a href="{% url 'home' %}" class="btn btn-link mt-2 text-muted">Cancel</a>
+                </div>
+            </form>
         </div>
     </div>
-    {% endfor %}
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    var categorySelect = $('#id_catID'); 
+    var subcategorySelect = $('#id_subcatID');
+
+    categorySelect.change(function() {
+        var categoryId = $(this).val();
+        subcategorySelect.html('<option value="">Loading...</option>').prop('disabled', true);
+        
+        if (categoryId) {
+            // Reuses the same API endpoint used for incidents
+            var url = `/api/subcategories/${categoryId}/`; 
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function(data) {
+                    subcategorySelect.html('<option value="">Select a Subcategory</option>').prop('disabled', false);
+                    $.each(data, function(id, name) {
+                        subcategorySelect.append($('<option></option>').attr('value', id).text(name));
+                    });
+                },
+                error: function() {
+                    subcategorySelect.html('<option value="">Error loading options</option>');
+                }
+            });
+        } else {
+            subcategorySelect.html('<option value="">Select a Category first</option>').prop('disabled', true);
+        }
+    });
+});
+</script>
+{% endblock extra_js %}

@@ -80,8 +80,25 @@
                             <tr>
                                 <td><a href="{% url 'incident_detail' incident.id %}" class="fw-bold">{{ incident.incident_number }}</a></td>
                                 <td>{{ incident.description|truncatechars:40 }}</td>
-                                <td>{{ incident.empID.get_full_name|default:incident.empID.username }}</td>
-                                <td>{{ incident.assigned_to.get_full_name|default:incident.assigned_to.username|default:"— Unassigned —" }}</td>
+                                
+                                {# --- SAFE LOOKUP FOR REPORTER --- #}
+                                <td>
+                                    {% if incident.empID %}
+                                        {{ incident.empID.get_full_name|default:incident.empID.email }}
+                                    {% else %}
+                                        <span class="text-muted italic">System</span>
+                                    {% endif %}
+                                </td>
+
+                                {# --- SAFE LOOKUP FOR ASSIGNED AGENT (Fixes the Error) --- #}
+                                <td>
+                                    {% if incident.assigned_to %}
+                                        {{ incident.assigned_to.get_full_name|default:incident.assigned_to.email }}
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark small">Unassigned</span>
+                                    {% endif %}
+                                </td>
+
                                 <td>
                                     <span class="badge 
                                         {% if incident.status == 'CLOSED' %}bg-success
@@ -92,7 +109,9 @@
                                         {{ incident.get_status_display }}
                                     </span>
                                 </td>
+                                
                                 <td>{{ incident.get_priority_display }}</td>
+                                
                                 <td>
                                     <a href="{% url 'incident_detail' incident.id %}" class="btn btn-sm btn-outline-dark">
                                         Review
@@ -110,8 +129,6 @@
             No incident records found in the system.
         </div>
     {% endif %}
-
-    {# Optional: Add a section for detailed CSAT reports #}
 
 </div>
 {% endblock %}

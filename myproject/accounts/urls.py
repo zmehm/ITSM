@@ -48,4 +48,9 @@ urlpatterns = [
     path('tickets/unassigned/', views.unassigned_queue_view, name='unassigned_queue'),
     path('tickets/my-active/', views.my_active_tickets_view, name='my_active_tickets'),
     path('tickets/feedback/', views.feedback_queue_view, name='feedback_queue'),
+
+    path('sla_management/', views.sla_management, name='sla_management'),
+    path('asset_management/', views.asset_management, name='asset_management'),
+    path('problem-management/', views.problem_management, name='problem_management'),
+    path('change-management/', views.change_management, name='change_management'),
 ]
