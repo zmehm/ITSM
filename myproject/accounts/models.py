@@ -252,3 +252,53 @@ class ServiceRequest(models.Model):
     description = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, default='OPEN')
+
+
+
+
+
+
+
+
+class Vendor(models.Model):
+    # Vendor_ID is PK
+    vendor_name = models.CharField(max_length=100) #
+    contact_person = models.CharField(max_length=100) #
+    support_email = models.EmailField(max_length=100) #
+    support_phone = models.CharField(max_length=100) #
+    sla_agreement = models.TextField(max_length=500) # As discussed: varchar/text
+    contract_expiry = models.DateField() #
+    asset_category = models.ForeignKey('Category', on_delete=models.SET_NULL, null=True) # FK
+    account_number = models.IntegerField() #
+    status = models.CharField(max_length=50, default='Active') #
+
+    def __str__(self): return self.vendor_name
+
+class SecurityManagement(models.Model):
+    # Security_ID is PK
+    threat_type = models.CharField(max_length=100) #
+    severity = models.CharField(max_length=100) #
+    affected_asset = models.ForeignKey('Asset', on_delete=models.CASCADE) # FK
+    assigned_admin = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True) # FK
+    status = models.CharField(max_length=50, default='Detected') #
+    detected_on = models.DateField(auto_now_add=True) #
+    detected_time = models.TimeField(auto_now_add=True) #
+    resolved_on = models.DateField(null=True, blank=True) #
+    resolved_time = models.TimeField(null=True, blank=True) #
+
+class BackupManagement(models.Model):
+    # Backup_ID is PK
+    target_asset = models.ForeignKey('Asset', on_delete=models.CASCADE) # FK
+    backup_type = models.CharField(max_length=100) # Full/Incremental
+    storage_location = models.CharField(max_length=100) #
+    last_success_date = models.DateField(null=True, blank=True) #
+    next_schedule = models.DateField() #
+    status = models.CharField(max_length=50, default='Scheduled') #
+
+class AuditManagement(models.Model):
+    # Audit_ID is PK
+    timestamp = models.DateTimeField(auto_now_add=True) #
+    performed_by = models.CharField(max_length=100) #
+    action_type = models.CharField(max_length=100) # Update/Delete/Create
+    old_value = models.TextField(null=True, blank=True) #
+    new_value = models.TextField(null=True, blank=True) #

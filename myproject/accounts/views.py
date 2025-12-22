@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.decorators.cache import never_cache
 from django.utils import timezone
 from django.db.models import Q 
+from datetime import timedelta
 
 # --- Email and Template Imports ---
 from django.template.loader import render_to_string 
@@ -22,7 +23,7 @@ from .forms import (
 from .models import (
     Category, SubCategory, Incident, TicketFeedback, 
     IncidentTracking, ServiceRequest, SLAManagement, Asset,
-    ProblemManagement, ProblemCase, RootCauseCat, RcSubcat
+    ProblemManagement, ProblemCase, RootCauseCat, RcSubcat,Vendor, SecurityManagement, BackupManagement, AuditManagement
 )
 
 User = get_user_model() 
@@ -178,23 +179,56 @@ def support_dashboard(request):
 @login_required
 @role_required('ADMIN')
 def admin_dashboard(request):
+    """
+    Administrator Power Panel: Consolidates ITSM metrics, Vendor tracking, 
+    Security monitoring, Backup schedules, and System Audits.
+    """
+    # 1. --- Core Incident Metrics ---
     total_incidents = Incident.objects.count()
     closed_count = Incident.objects.filter(status='CLOSED').count()
     resolved_count = Incident.objects.filter(status='AWAITING_FEEDBACK').count()
     
+    # 2. --- CSAT / Feedback Logic ---
     satisfied_feedback_count = TicketFeedback.objects.filter(is_satisfied=True).count()
     total_feedback_count = TicketFeedback.objects.count()
     csat_score = (satisfied_feedback_count / total_feedback_count * 100) if total_feedback_count > 0 else 0
+    
+    # 3. --- NEW: Vendor Management ---
+    # Monitor contracts expiring within 30 days
+    expiry_threshold = timezone.now().date() + timedelta(days=30)
+    expiring_vendors = Vendor.objects.filter(
+        contract_expiry__lte=expiry_threshold, 
+        status='Active'
+    ).order_by('contract_expiry')
+    
+    # 4. --- NEW: Security Management ---
+    # Track active threats that require admin attention
+    active_threats = SecurityManagement.objects.filter(
+        status='Detected'
+    ).select_related('affected_asset', 'assigned_admin').order_by('-severity')
+    
+    # 5. --- NEW: Backup Management ---
+    # Monitor upcoming and overdue data backup tasks
+    backup_status = BackupManagement.objects.all().select_related('target_asset').order_by('next_schedule')
+    
+    # 6. --- NEW: Audit Management ---
+    # Display the most recent 10 administrative actions for the log
+    recent_audits = AuditManagement.objects.all().order_by('-timestamp')[:10]
     
     context = {
         'total_incidents': total_incidents,
         'closed_count': closed_count,
         'resolved_count': resolved_count,
         'csat_score': round(csat_score, 2),
-        'all_incidents': Incident.objects.all().select_related('empID', 'assigned_to').order_by('-created_on'),
+        'all_incidents': Incident.objects.all().select_related('empID', 'assigned_to').order_by('-created_on')[:10],
+        
+        # Admin Module Context
+        'expiring_vendors': expiring_vendors,
+        'active_threats': active_threats,
+        'backup_status': backup_status,
+        'recent_audits': recent_audits,
     }
     return render(request, 'accounts/admin_dashboard.html', context)
-
 
 # =====================================================================
 # 4. INCIDENT WORKFLOW & TRACKING AUTOMATION
@@ -389,3 +423,74 @@ def asset_management(request):
 @login_required
 def change_management(request): 
     return render(request, 'accounts/change_management.html')
+    
+
+
+@login_required
+def vendor_management(request):
+    # logic for vendor management will go here
+    return render(request, 'accounts/vendor_management.html')
+
+@login_required
+def security_center(request):
+    # logic for security threats will go here
+    return render(request, 'accounts/security_center.html')
+
+@login_required
+def backup_management(request):
+    # logic for backup compliance will go here
+    return render(request, 'accounts/backup_management.html')
+
+@login_required
+def audit_trail(request):
+    # logic for audit logs will go here
+    return render(request, 'accounts/audit_trail.html')
+
+
+@login_required
+def incident_tracker(request):
+    # Use 'created_on' instead of 'created_at'
+    all_tracked_incidents = Incident.objects.all().order_by('-created_on', '-created_time')
+
+    # Logic for "Aging": use 'created_on'
+    threshold = timezone.now().date() - timedelta(days=1)
+    aging_incidents = Incident.objects.filter(created_on__lt=threshold).exclude(status='CLOSED')
+
+    # Logic for "Reopened"
+    reopened_incidents = Incident.objects.filter(status='REOPENED')
+
+    context = {
+        'all_tracked_incidents': all_tracked_incidents,
+        'aging_incidents': aging_incidents,
+        'reopened_incidents': reopened_incidents,
+    }
+    return render(request, 'accounts/incident_tracker.html', context)
+@login_required
+def tech_tracking(request):
+    """
+    Monitor support technician workload and efficiency.
+    """
+    # Logic to calculate tech metrics will go here
+    return render(request, 'accounts/tech_tracking.html')
+
+
+@login_required
+def support_oversight(request):
+    if request.user.role != 'ADMIN':
+        return redirect('home')
+
+    # Monitor existing models
+    active_problems = ProblemManagement.objects.exclude(status='close')
+    pending_requests = ServiceRequest.objects.filter(status='OPEN')
+    sla_breaches = SLAManagement.objects.filter(sla_status='Breached')
+    
+    today = timezone.now().date()
+    critical_assets = Asset.objects.filter(warranty_expiry__lte=today + timedelta(days=30))
+
+    context = {
+        'active_problems': active_problems,
+        'pending_requests': pending_requests,
+        'sla_breaches': sla_breaches,
+        'critical_assets': critical_assets,
+    }
+    return render(request, 'accounts/support_oversight.html', context)

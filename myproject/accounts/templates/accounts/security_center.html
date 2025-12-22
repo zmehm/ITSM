@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Security Center{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="admin-hero mb-4">
+        <div class="d-flex justify-content-between align-items-center bg-dark text-white p-3 rounded-top border-bottom border-danger border-3">
+            <h2 class="h5 mb-0"><i class="fa-solid fa-shield-virus me-2"></i> Active Security Threats</h2>
+            <span class="badge bg-danger">Real-time Monitoring</span>
+        </div>
+        <div class="bg-white p-3 shadow-sm rounded-bottom">
+            <p class="text-muted small mb-0">Live detections requiring immediate administrative triage.</p>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light text-uppercase small fw-bold">
+                    <tr>
+                        <th class="ps-4">Threat Type</th>
+                        <th>Severity</th>
+                        <th>Affected Asset</th>
+                        <th>Detected On</th>
+                        <th class="pe-4 text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for threat in active_threats %}
+                    <tr>
+                        <td class="ps-4 fw-bold">{{ threat.threat_type }}</td>
+                        <td><span class="badge {% if threat.severity == 'High' %}bg-danger{% else %}bg-warning text-dark{% endif %}">{{ threat.severity }}</span></td>
+                        <td>{{ threat.affected_asset.name }}</td>
+                        <td>{{ threat.detected_on }}</td>
+                        <td class="pe-4 text-end"><button class="btn btn-outline-danger btn-sm">Triage</button></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center py-5 text-muted">No active threats detected.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -2,243 +2,342 @@
 
 {% block content %}
 <style>
-    /* Hide the top bar and sidebar for register page */
-    .app-topbar,
-    .sidebar {
-        display: none !important;
-    }
+    /* 1. LAYOUT & VISIBILITY (STRICTLY YOUR CSS) */
+    .app-topbar, .sidebar { display: none !important; }
 
-    /* Full screen register */
     body, html {
         height: 100%;
         margin: 0;
         overflow-x: hidden;
     }
 
-    .layout {
-        margin: 0;
-        display: block;
-    }
+    .layout { margin: 0; display: block; }
 
-    .content {
-        margin-left: 0 !important;
-        width: 100% !important;
-    }
+    .content { margin-left: 0 !important; width: 100% !important; }
 
-    /* Custom background */
     .content-body {
-        padding: 2rem 0 !important;
+        padding: 2rem 1rem !important;
         min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         position: relative;
-        overflow-y: auto;
+        overflow-y: scroll;
+        overflow-x: hidden;
     }
 
-    /* Register card styling */
+    /* Animated background circles */
+    .content-body::before, .content-body::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        opacity: 0.08;
+        animation: float 25s infinite ease-in-out;
+    }
+
+    .content-body::before {
+        width: 500px; height: 500px; background: white;
+        top: -150px; left: -150px;
+    }
+
+    .content-body::after {
+        width: 400px; height: 400px; background: white;
+        bottom: -100px; right: -100px; animation-delay: 7s;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(30px, 30px) scale(1.05); }
+    }
+
     .register-container {
         position: relative;
         z-index: 1;
         width: 100%;
-        max-width: 900px;
-        padding: 1rem;
-        margin: auto;
+        max-width: 580px;
+        margin: 0 auto;
     }
 
     .register-card {
-        background: rgba(255, 255, 255, 0.98);
+        background: rgba(255, 255, 255, 0.96);
         backdrop-filter: blur(20px);
-        border-radius: 24px;
-        padding: 2.5rem 3rem;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        animation: fadeInScale 0.6s ease-out;
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.4);
     }
 
-    @keyframes fadeInScale {
-        from {
-            opacity: 0;
-            transform: scale(0.9) translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-        }
-    }
+    .register-header { text-align: center; margin-bottom: 2rem; }
 
-    /* Title */
-    .register-title {
-        font-size: 2rem;
-        font-weight: 800;
+    .register-logo {
+        width: 54px; height: 54px; margin: 0 auto 1rem;
         background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 14px; display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.35);
+    }
+
+    .register-logo i { font-size: 1.5rem; color: white; }
+
+    .register-title {
+        font-size: 1.85rem; font-weight: 800;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        background-clip: text;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        background-clip: text;
-        text-align: center;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.4rem; letter-spacing: -0.5px;
     }
 
-    .register-subtitle {
-        text-align: center;
-        color: #64748b;
-        font-size: 0.95rem;
-        margin-bottom: 2rem;
+    .register-subtitle { color: #64748b; font-size: 0.9rem; line-height: 1.4; }
+
+    /* Step Progress Indicator */
+    .step-progress {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 2.5rem; position: relative;
     }
 
-    /* Form styling */
-    .form-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1.5rem;
-        margin-bottom: 1.5rem;
+    .step-progress::before {
+        content: ''; position: absolute; top: 20px; left: 0; right: 0;
+        height: 3px; background: #e2e8f0; z-index: 0;
     }
 
-    .form-group {
-        position: relative;
-    }
-
-    .form-label {
-        font-weight: 600;
-        color: #1e293b;
-        margin-bottom: 0.5rem;
-        font-size: 0.875rem;
-        display: block;
-    }
-
-    /* Target Django's auto-generated fields */
-    .form-control,
-    .form-select,
-    select,
-    input[type="text"],
-    input[type="email"],
-    input[type="password"],
-    input[type="date"] {
-        border: 2px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 0.75rem 1rem;
-        font-size: 0.95rem;
-        transition: all 0.3s ease;
-        background: white;
-        width: 100%;
-    }
-
-    /* Submit button */
-    .btn-register {
-        width: 100%;
-        padding: 0.875rem;
+    .step-progress-line {
+        position: absolute; top: 20px; left: 0; height: 3px;
         background: linear-gradient(135deg, #667eea, #764ba2);
-        border: none;
-        border-radius: 10px;
-        font-weight: 700;
-        font-size: 0.95rem;
-        color: white;
-        margin-top: 1rem;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        cursor: pointer;
+        z-index: 1; transition: width 0.4s ease;
     }
 
-    .btn-register:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+    .step-item {
+        display: flex; flex-direction: column; align-items: center;
+        position: relative; z-index: 2; flex: 1;
     }
 
-    /* Hide scrollbar */
-    body::-webkit-scrollbar { display: none; }
-    body { -ms-overflow-style: none; scrollbar-width: none; }
+    .step-circle {
+        width: 40px; height: 40px; border-radius: 50%; background: #e2e8f0;
+        color: #94a3b8; display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 1.1rem; transition: all 0.4s ease; margin-bottom: 0.5rem;
+    }
+
+    .step-item.active .step-circle {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); transform: scale(1.1);
+    }
+
+    .step-item.completed .step-circle { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+
+    .step-label { font-size: 0.8rem; font-weight: 600; color: #94a3b8; }
+
+    .step-item.active .step-label, .step-item.completed .step-label { color: #667eea; }
+
+    .form-step { display: none; animation: fadeIn 0.5s ease; }
+    .form-step.active { display: block; }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateX(20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    .step-title { font-size: 1.3rem; font-weight: 700; color: #1e293b; margin-bottom: 1.5rem; text-align: center; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+    .form-row-single { margin-bottom: 1.25rem; }
+
+    .form-label { font-weight: 600; color: #1e293b; margin-bottom: 0.5rem; font-size: 0.85rem; display: block; }
+
+    .form-control, .form-select, select, input {
+        border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0.7rem 1rem;
+        font-size: 0.9rem; transition: all 0.3s ease; background: #fafafa; width: 100%;
+    }
+
+    .form-control:focus, input:focus { outline: none; border-color: #667eea; background: white; box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.08); }
+
+    .form-navigation { display: flex; gap: 1rem; margin-top: 2rem; }
+    .btn-prev, .btn-next, .btn-submit { flex: 1; padding: 0.85rem; border: none; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.3s ease; }
+    .btn-prev { background: #e2e8f0; color: #64748b; }
+    .btn-next, .btn-submit { background: linear-gradient(135deg, #667eea, #764ba2); color: white; box-shadow: 0 6px 20px rgba(102, 126, 234, 0.35); }
+
+    .terms-checkbox { display: flex; align-items: flex-start; gap: 10px; margin-top: 1.5rem; }
+    .terms-checkbox input { width: auto; margin-top: 4px; }
+    .terms-label { font-size: 0.85rem; color: #64748b; line-height: 1.4; }
+    .terms-link { color: #667eea; text-decoration: none; font-weight: 600; }
+
+    .signin-link { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: #64748b; }
+    .signin-link a { color: #667eea; font-weight: 600; text-decoration: none; }
+
+    .hidden { display: none; }
 </style>
 
 <div class="register-container">
     <div class="register-card">
-        <h1 class="register-title">Create Account</h1>
-        <p class="register-subtitle">Join ITSM Portal - Your Employee ID will be generated automatically</p>
+        <div class="register-header">
+            <div class="register-logo"><i class="fa-solid fa-user-plus"></i></div>
+            <h1 class="register-title">Sign Up</h1>
+        </div>
 
-        <form method="POST">
+        <div class="step-progress">
+            <div class="step-progress-line" id="progressLine"></div>
+            <div class="step-item active" data-step="1"><div class="step-circle">1</div><div class="step-label">Basic Info</div></div>
+            <div class="step-item" data-step="2"><div class="step-circle">2</div><div class="step-label">Work Info</div></div>
+            <div class="step-item" data-step="3"><div class="step-circle">3</div><div class="step-label">Security</div></div>
+        </div>
+
+        <form method="POST" id="registrationForm">
             {% csrf_token %}
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label">First Name</label>
-                    {{ form.first_name }}
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Last Name</label>
-                    {{ form.last_name }}
-                </div>
+            
+            <div class="hidden">
+                {{ form.first_name }} {{ form.last_name }} {{ form.email }}
+                {{ form.phone_number }} {{ form.date_of_birth }} {{ form.Gender }}
+                {{ form.Subsidiary }} {{ form.Dept }} {{ form.Grade }}
+                {{ form.Discipline }} {{ form.Floor }}
+                {{ form.password }} {{ form.confirm_password }}
             </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label">Email Address</label>
-                    {{ form.email }}
+            <div class="form-steps">
+                <div class="form-step active" data-step="1">
+                    <h2 class="step-title">Basic Information</h2>
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">First Name</label><input type="text" class="form-control" id="step1_first_name" required></div>
+                        <div class="form-group"><label class="form-label">Last Name</label><input type="text" class="form-control" id="step1_last_name" required></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">Email Address</label><input type="email" class="form-control" id="step1_email" required></div>
+                        <div class="form-group"><label class="form-label">Phone Number</label><input type="text" class="form-control" id="step1_phone_number" required></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">Date of Birth</label><input type="date" class="form-control" id="step1_date_of_birth" required></div>
+                        <div class="form-group"><label class="form-label">Gender</label>
+                            <select class="form-select" id="step1_Gender" required>
+                                <option value="">Select Gender</option>
+                                <option value="M">Male</option><option value="F">Female</option><option value="O">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-navigation"><button type="button" class="btn-next" onclick="nextStep()">Next <i class="fa-solid fa-arrow-right ms-2"></i></button></div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Phone Number</label>
-                    {{ form.phone_number }}
-                </div>
-            </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label">Date of Birth</label>
-                    {{ form.date_of_birth }}
+                <div class="form-step" data-step="2">
+                    <h2 class="step-title">Work Information</h2>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Subsidiary</label>
+                            <select class="form-select" id="step2_Subsidiary" required>
+                                <option value="">Select Subsidiary</option>
+                                {% for val, label in form.fields.Subsidiary.choices %}{% if val %}<option value="{{ val }}">{{ label }}</option>{% endif %}{% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Department</label>
+                            <select class="form-select" id="step2_Dept" required>
+                                <option value="">Select Department</option>
+                                {% for val, label in form.fields.Dept.choices %}{% if val %}<option value="{{ val }}">{{ label }}</option>{% endif %}{% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Grade</label>
+                            <select class="form-select" id="step2_Grade" required>
+                                <option value="">Select Grade</option>
+                                {% for val, label in form.fields.Grade.choices %}{% if val %}<option value="{{ val }}">{{ label }}</option>{% endif %}{% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Discipline</label>
+                            <select class="form-select" id="step2_Discipline" required>
+                                <option value="">Select Discipline</option>
+                                {% for val, label in form.fields.Discipline.choices %}{% if val %}<option value="{{ val }}">{{ label }}</option>{% endif %}{% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row-single"><div class="form-group"><label class="form-label">Floor / Office Location</label><input type="text" class="form-control" id="step2_Floor" required></div></div>
+                    <div class="form-navigation">
+                        <button type="button" class="btn-prev" onclick="prevStep()"><i class="fa-solid fa-arrow-left me-2"></i> Previous</button>
+                        <button type="button" class="btn-next" onclick="nextStep()">Next <i class="fa-solid fa-arrow-right ms-2"></i></button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Gender</label>
-                    {{ form.Gender }}
-                </div>
-            </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label">Subsidiary</label>
-                    {{ form.Subsidiary }}
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Department</label>
-                    {{ form.Dept }}
-                </div>
-            </div>
+                <div class="form-step" data-step="3">
+                    <h2 class="step-title">Security</h2>
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-control" id="step3_password" required></div>
+                        <div class="form-group"><label class="form-label">Confirm Password</label><input type="password" class="form-control" id="step3_confirm_password" required></div>
+                    </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label">Grade</label>
-                    {{ form.Grade }}
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Discipline</label>
-                    {{ form.Discipline }}
-                </div>
-            </div>
+                    <div class="terms-checkbox">
+                        <input type="checkbox" id="terms_agreement" required>
+                        <label for="terms_agreement" class="terms-label">
+                            I have read and agree to the <a href="#" class="terms-link">Terms and Conditions</a> and <a href="#" class="terms-link">Privacy Policy</a>
+                        </label>
+                    </div>
 
-            <div class="form-row">
-                <div class="form-group" style="grid-column: 1 / 3;">
-                    <label class="form-label">Floor / Office Location</label>
-                    {{ form.Floor }}
+                    <div class="form-navigation">
+                        <button type="button" class="btn-prev" onclick="prevStep()"><i class="fa-solid fa-arrow-left me-2"></i> Previous</button>
+                        <button type="button" class="btn-submit" onclick="submitForm()"><i class="fa-solid fa-user-plus me-2"></i> Create Account</button>
+                    </div>
                 </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    {{ form.password }}
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Confirm Password</label>
-                    {{ form.confirm_password }}
-                </div>
-            </div>
-
-            <button type="submit" class="btn-register">
-                <i class="fa-solid fa-user-plus me-2"></i> Register Account
-            </button>
-
-            <div class="text-center mt-3">
-                Already registered? <a href="{% url 'login_view' %}" style="color: #667eea; font-weight: 600;">Sign In</a>
             </div>
         </form>
+        <div class="signin-link">Already have an account? <a href="{% url 'login_view' %}">Sign In</a></div>
     </div>
 </div>
+
+<script>
+let currentStep = 1;
+const totalSteps = 3;
+
+function updateStepIndicator() {
+    document.querySelectorAll('.step-item').forEach((item, index) => {
+        const stepNum = index + 1;
+        item.classList.toggle('completed', stepNum < currentStep);
+        item.classList.toggle('active', stepNum === currentStep);
+    });
+    document.getElementById('progressLine').style.width = ((currentStep - 1) / (totalSteps - 1)) * 100 + '%';
+    document.querySelectorAll('.form-step').forEach((step, index) => {
+        step.classList.toggle('active', index + 1 === currentStep);
+    });
+}
+
+function validateStep(step) {
+    const inputs = document.querySelectorAll(`.form-step[data-step="${step}"] input[required], .form-step[data-step="${step}"] select[required]`);
+    let isValid = true;
+    inputs.forEach(input => {
+        if (!input.value.trim()) { isValid = false; input.style.borderColor = '#ef4444'; }
+        else { input.style.borderColor = '#e2e8f0'; }
+    });
+    
+    // Check checkbox on step 3
+    if (step === 3) {
+        const checkbox = document.getElementById('terms_agreement');
+        if (!checkbox.checked) {
+            isValid = false;
+            alert("You must agree to the Terms and Conditions.");
+        }
+    }
+    return isValid;
+}
+
+function nextStep() { if (validateStep(currentStep)) { currentStep++; updateStepIndicator(); } }
+function prevStep() { if (currentStep > 1) { currentStep--; updateStepIndicator(); } }
+
+function submitForm() {
+    if (!validateStep(3)) return;
+    if (document.getElementById('step3_password').value !== document.getElementById('step3_confirm_password').value) {
+        alert('Passwords do not match!'); return;
+    }
+    
+    document.querySelector('input[name="first_name"]').value = document.getElementById('step1_first_name').value;
+    document.querySelector('input[name="last_name"]').value = document.getElementById('step1_last_name').value;
+    document.querySelector('input[name="email"]').value = document.getElementById('step1_email').value;
+    document.querySelector('input[name="phone_number"]').value = document.getElementById('step1_phone_number').value;
+    document.querySelector('input[name="date_of_birth"]').value = document.getElementById('step1_date_of_birth').value;
+    document.querySelector('select[name="Gender"]').value = document.getElementById('step1_Gender').value;
+    document.querySelector('select[name="Subsidiary"]').value = document.getElementById('step2_Subsidiary').value;
+    document.querySelector('select[name="Dept"]').value = document.getElementById('step2_Dept').value;
+    document.querySelector('select[name="Grade"]').value = document.getElementById('step2_Grade').value;
+    document.querySelector('select[name="Discipline"]').value = document.getElementById('step2_Discipline').value;
+    document.querySelector('input[name="Floor"]').value = document.getElementById('step2_Floor').value;
+    document.querySelector('input[name="password"]').value = document.getElementById('step3_password').value;
+    document.querySelector('input[name="confirm_password"]').value = document.getElementById('step3_confirm_password').value;
+
+    document.getElementById('registrationForm').submit();
+}
+updateStepIndicator();
+</script>
 {% endblock %}

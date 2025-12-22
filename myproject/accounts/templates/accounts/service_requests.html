@@ -1,67 +1,180 @@
 {% extends 'base.html' %}
 
-{% block title %}Submit Service Request{% endblock %}
-
 {% block content %}
-<div class="container mt-4">
-    <div class="card shadow-sm">
-        <div class="card-header bg-success text-white text-center">
-            <h4 class="mb-0"><i class="fa-solid fa-concierge-bell"></i> New Service Request</h4>
-        </div>
-        <div class="card-body">
-            
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
 
-            <form action="{% url 'service_requests' %}" method="POST">
-                {% csrf_token %}
-                
-                {% if form.non_field_errors %}
-                    <div class="alert alert-danger">
-                        {{ form.non_field_errors }}
-                    </div>
+    .request-page {
+        font-family: 'Outfit', sans-serif;
+        background: linear-gradient(135deg, #0f2027 0%, #2c5364 100%);
+        min-height: 100vh;
+        padding: 1.5rem 0;
+    }
+
+    .request-container {
+        max-width: 650px; /* Compact rectangle design */
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+
+    .request-card {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+    }
+
+    .request-header {
+        background: #1e293b; /* Consistent dark header */
+        padding: 1.25rem;
+        text-align: center;
+        border-bottom: 3px solid #10b981; /* Green accent for Service Requests */
+    }
+
+    .request-icon {
+        font-size: 1.5rem;
+        color: #10b981;
+        margin-bottom: 0.2rem;
+    }
+
+    .request-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: white;
+        margin: 0;
+    }
+
+    .request-body {
+        padding: 1.5rem 2rem;
+    }
+
+    .section-header {
+        margin-bottom: 0.8rem;
+        padding-bottom: 0.3rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .section-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 0.3rem;
+        display: block;
+    }
+
+    .form-control, .form-select, select, input, textarea {
+        padding: 0.6rem 0.8rem;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        background: #f8fafc;
+        width: 100%;
+        transition: border-color 0.2s;
+    }
+
+    .form-control:focus {
+        border-color: #10b981;
+        outline: none;
+    }
+
+    textarea.form-control {
+        min-height: 100px;
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 0.85rem;
+        background: #064e3b; /* Deep green for requests */
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.2s;
+        margin-top: 1rem;
+    }
+
+    .btn-submit:hover {
+        background: #10b981;
+    }
+
+    .form-text {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        margin-top: 0.25rem;
+    }
+</style>
+
+<div class="request-page">
+    <div class="request-container">
+        <div class="request-card">
+            <div class="request-header">
+                <div class="request-icon"><i class="fa-solid fa-concierge-bell"></i></div>
+                <h1 class="request-title">New Service Request</h1>
+            </div>
+
+            <div class="request-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        {% if "logged out" not in message.message %}
+                            <div class="alert alert-{{ message.tags }} p-2 small mb-3">{{ message }}</div>
+                        {% endif %}
+                    {% endfor %}
                 {% endif %}
 
-                <div class="form-group mb-3">
-                    <label for="{{ form.catID.id_for_label }}" class="form-label"><b>{{ form.catID.label }}</b></label>
-                    {{ form.catID }}
-                    <div class="form-text">e.g., New hardware/software</div>
-                    {% for error in form.catID.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-                </div>
+                <form action="{% url 'service_requests' %}" method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="section-header">
+                        <h2 class="section-title">Classification</h2>
+                    </div>
 
-                <div class="form-group mb-3">
-                    <label for="{{ form.subcatID.id_for_label }}" class="form-label"><b>{{ form.subcatID.label }}</b></label>
-                    {{ form.subcatID }}
-                    <div class="form-text">e.g., Account access/password reset</div>
-                    {% for error in form.subcatID.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-                </div>
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        {{ form.catID }}
+                        <div class="form-text">Select the type of service required (e.g., Hardware, Software)</div>
+                    </div>
 
-                <div class="form-group mb-4">
-                    <label for="{{ form.description.id_for_label }}" class="form-label"><b>Brief Description</b></label>
-                    {{ form.description }}
-                    <div class="form-text">Limit to 100 characters.</div>
-                    {% for error in form.description.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-                </div>
+                    <div class="form-group">
+                        <label class="form-label">Subcategory</label>
+                        {{ form.subcatID }}
+                        <div class="form-text">Specify the request (e.g., Password Reset, New Asset)</div>
+                    </div>
 
-                <div class="text-center">
-                    <button type="submit" class="btn btn-success btn-lg w-100">
-                        Submit Request
+                    <div class="section-header" style="margin-top: 1.5rem;">
+                        <h2 class="section-title">Request Details</h2>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Brief Description</label>
+                        {{ form.description }}
+                        <div class="form-text">Maximum 100 characters.</div>
+                    </div>
+
+                    <button type="submit" class="btn-submit">
+                        <i class="fa-solid fa-paper-plane me-2"></i>Submit Service Request
                     </button>
-                    <a href="{% url 'home' %}" class="btn btn-link mt-2 text-muted">Cancel</a>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script> 
 <script>
 $(document).ready(function() {
     var categorySelect = $('#id_catID'); 
@@ -69,27 +182,28 @@ $(document).ready(function() {
 
     categorySelect.change(function() {
         var categoryId = $(this).val();
+        
+        // Show loading state
         subcategorySelect.html('<option value="">Loading...</option>').prop('disabled', true);
         
         if (categoryId) {
-            // Reuses the same API endpoint used for incidents
-            var url = `/api/subcategories/${categoryId}/`; 
-
             $.ajax({
-                url: url,
+                url: '/api/subcategories/' + categoryId + '/', 
                 type: 'GET',
+                dataType: 'json',
                 success: function(data) {
+                    // Populate dropdown
                     subcategorySelect.html('<option value="">Select a Subcategory</option>').prop('disabled', false);
                     $.each(data, function(id, name) {
                         subcategorySelect.append($('<option></option>').attr('value', id).text(name));
                     });
                 },
                 error: function() {
-                    subcategorySelect.html('<option value="">Error loading options</option>');
+                    subcategorySelect.html('<option value="">Error loading options</option>').prop('disabled', false);
                 }
             });
         } else {
-            subcategorySelect.html('<option value="">Select a Category first</option>').prop('disabled', true);
+            subcategorySelect.html('<option value="">Select Category first</option>').prop('disabled', true);
         }
     });
 });

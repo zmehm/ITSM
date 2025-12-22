@@ -1,73 +1,184 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white text-center">
-            <h4 class="mb-0">Create Incident</h4>
-        </div>
-        <div class="card-body">
-            
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
 
-            <form action="{% url 'create_incident' %}" method="POST" enctype="multipart/form-data">
-                {% csrf_token %}
-                
-                {% if form.non_field_errors %}
-                    <div class="alert alert-danger">
-                        {{ form.non_field_errors }}
-                    </div>
+    .incident-page {
+        font-family: 'Outfit', sans-serif;
+        background: linear-gradient(135deg, #0f2027 0%, #2c5364 100%);
+        min-height: 100vh;
+        padding: 1.5rem 0;
+    }
+
+    .incident-container {
+        max-width: 650px; /* Compact rectangle */
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+
+    .incident-card {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+    }
+
+    .incident-header {
+        background: #1e293b; /* Header style matching */
+        padding: 1rem;
+        text-align: center;
+        border-bottom: 3px solid #38bdf8;
+    }
+
+    .incident-icon {
+        font-size: 1.5rem;
+        color: #38bdf8;
+        margin-bottom: 0.2rem;
+    }
+
+    .incident-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: white;
+        margin: 0;
+    }
+
+    .incident-body {
+        padding: 1.25rem 2rem;
+    }
+
+    .section-header {
+        margin-bottom: 0.8rem;
+        padding-bottom: 0.3rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .section-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-group {
+        margin-bottom: 0.8rem;
+    }
+
+    .form-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 0.3rem;
+        display: block;
+    }
+
+    .form-control, .form-select, select, input, textarea {
+        padding: 0.5rem 0.8rem;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        background: #f8fafc;
+        width: 100%;
+    }
+
+    textarea.form-control {
+        min-height: 80px;
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 0.8rem;
+        background: #0f172a;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.2s;
+        margin-top: 1rem;
+    }
+
+    .btn-submit:hover {
+        background: #38bdf8;
+        color: #0f172a;
+    }
+</style>
+
+<div class="incident-page">
+    <div class="incident-container">
+        <div class="incident-card">
+            <div class="incident-header">
+                <div class="incident-icon"><i class="fa-solid fa-bolt"></i></div>
+                <h1 class="incident-title">New Incident</h1>
+            </div>
+
+            <div class="incident-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        {% if "logged out" not in message.message %}
+                            <div class="alert alert-{{ message.tags }} p-2 small mb-3">
+                                {{ message }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
                 {% endif %}
 
-                <div class="form-group mb-3">
-                    <label for="{{ form.subsidiary.id_for_label }}" class="form-label"><b>{{ form.subsidiary.label }}</b></label>
-                    {{ form.subsidiary }}
-                    {% for error in form.subsidiary.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-                    <div class="form-text">Select your CIL Subsidiary (e.g., BCCL, CCL).</div>
-                </div>
-
-                <div class="form-group mb-3">
-                    <label for="{{ form.catID.id_for_label }}" class="form-label"><b>{{ form.catID.label }}</b></label>
-                    {{ form.catID }}
-                    {% for error in form.catID.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-                </div>
-
-                <div class="form-group mb-3">
-                    <label for="{{ form.subcatID.id_for_label }}" class="form-label"><b>{{ form.subcatID.label }}</b></label>
-                    {{ form.subcatID }}
-                    {% for error in form.subcatID.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-                </div>
-                
-                <hr>
-
-                {% for field in form %}
-                    {% if field.name not in 'catID subcatID subsidiary' %}
-                    <div class="form-group mb-3">
-                        <label for="{{ field.id_for_label }}" class="form-label"><b>{{ field.label }}</b></label>
-                        {{ field }}
-                        {% if field.help_text %}
-                            <div class="form-text">{{ field.help_text }}</div>
-                        {% endif %}
-                        {% for error in field.errors %}
-                            <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
+                <form action="{% url 'create_incident' %}" method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="section-header">
+                        <h2 class="section-title">Classification</h2>
                     </div>
-                    {% endif %}
-                {% endfor %}
+                    
+                    <div class="form-group">
+                        <label class="form-label">Subsidiary</label>
+                        {{ form.subsidiary }}
+                    </div>
 
-                <div class="form-group mb-3 text-center">
-                    <button type="submit" class="btn btn-success btn-lg w-100">
-                        <i class="fa-solid fa-paper-plane"></i> Submit Incident
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label class="form-label">Category</label>
+                                {{ form.catID }} </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label class="form-label">Subcategory</label>
+                                {{ form.subcatID }} </div>
+                        </div>
+                    </div>
+
+                    <div class="section-header" style="margin-top: 1rem;">
+                        <h2 class="section-title">Issue Details</h2>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Detailed Description</label>
+                        {{ form.description }}
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label class="form-label">Priority</label>
+                                {{ form.priority }}
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label class="form-label">File Upload</label>
+                                {{ form.attachment }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit">
+                        <i class="fa-solid fa-paper-plane me-2"></i>Submit Ticket
                     </button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -75,43 +186,36 @@
 
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script> 
-
 <script>
 $(document).ready(function() {
+    // Correct selectors for AJAX functionality
     var categorySelect = $('#id_catID'); 
     var subcategorySelect = $('#id_subcatID');
 
     categorySelect.change(function() {
         var categoryId = $(this).val();
-
-        // Reset and disable subcategory dropdown during loading
+        
+        // Show loading state in subcategory
         subcategorySelect.html('<option value="">Loading...</option>').prop('disabled', true);
         
         if (categoryId) {
-            var url = `/api/subcategories/${categoryId}/`; 
-
             $.ajax({
-                url: url,
+                url: '/api/subcategories/' + categoryId + '/', 
                 type: 'GET',
                 dataType: 'json',
                 success: function(data) {
+                    // Populate with results
                     subcategorySelect.html('<option value="">Select a Subcategory</option>').prop('disabled', false);
-                    
-                    if (Object.keys(data).length > 0) {
-                        $.each(data, function(id, name) {
-                            subcategorySelect.append($('<option></option>').attr('value', id).text(name));
-                        });
-                    } else {
-                        subcategorySelect.html('<option value="">No subcategories available</option>');
-                    }
+                    $.each(data, function(id, name) {
+                        subcategorySelect.append($('<option></option>').attr('value', id).text(name));
+                    });
                 },
-                error: function(xhr, status, error) {
-                    console.error("AJAX Error:", status, error);
-                    subcategorySelect.html('<option value="">Error loading options</option>');
+                error: function() {
+                    subcategorySelect.html('<option value="">Error loading</option>').prop('disabled', false);
                 }
             });
         } else {
-            subcategorySelect.html('<option value="">Select a Category first</option>').prop('disabled', true);
+            subcategorySelect.html('<option value="">---------</option>').prop('disabled', true);
         }
     });
 });

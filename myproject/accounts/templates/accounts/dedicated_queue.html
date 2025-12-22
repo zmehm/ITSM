@@ -1,34 +1,372 @@
 {% extends 'base.html' %}
 {% load static %}
-{# REMOVED: {% load custom_filters %} #}
 
 {% block title %}{{ queue_name }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    {# Display the queue name using the formatted count string sent from the view #}
-    <h2 class="mb-4 fw-bold text-{{ queue_color }} border-bottom pb-2">
-        <i class="fas {{ queue_icon }} me-2"></i> {{ queue_name }} ({{ ticket_count_formatted }} Tickets)
-    </h2>
-    
-    {% if tickets %}
-        <p class="text-muted">Below is the complete list of tickets in this queue, sorted by priority.</p>
-        
-        <div class="card shadow-lg mb-5">
-            <div class="card-body p-0">
-                {# This snippet includes your fully formatted ticket table #}
-                {% include 'accounts/includes/ticket_table.html' with tickets=tickets is_support_view=is_support_view is_feedback_queue=is_feedback_queue %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+
+    .queue-page {
+        font-family: 'Outfit', sans-serif;
+        background: #f8fafc;
+        min-height: 100vh;
+        padding: 2rem;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    .queue-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    /* Header Section */
+    .queue-header {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        border-radius: 20px;
+        padding: 2rem 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .queue-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .queue-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .queue-title-section {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .queue-icon-box {
+        width: 54px;
+        height: 54px;
+        background: rgba(245, 158, 11, 0.15);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .queue-icon-box i {
+        font-size: 1.5rem;
+        color: #f59e0b;
+    }
+
+    .queue-title {
+        color: white;
+        font-size: 1.75rem;
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+
+    .queue-badge {
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+        padding: 0.5rem 1.25rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .queue-stats {
+        display: flex;
+        gap: 2rem;
+        margin-top: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .stat-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .stat-label {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+
+    .stat-value {
+        color: white;
+        font-size: 1.5rem;
+        font-weight: 800;
+    }
+
+    .queue-description {
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 0.9375rem;
+        margin-top: 1rem;
+        font-weight: 500;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Table Card */
+    .table-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+
+    .table-header {
+        background: #f8fafc;
+        padding: 1.25rem 2rem;
+        border-bottom: 2px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .table-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+    }
+
+    .table-count {
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        color: white;
+        padding: 0.35rem 0.875rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+
+    /* Empty State */
+    .empty-state {
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        border-radius: 16px;
+        padding: 3rem 2rem;
+        text-align: center;
+        border: 2px solid #86efac;
+    }
+
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        box-shadow: 0 8px 20px rgba(134, 239, 172, 0.3);
+    }
+
+    .empty-icon i {
+        font-size: 2.5rem;
+        color: #16a34a;
+    }
+
+    .empty-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #166534;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-message {
+        font-size: 1rem;
+        color: #166534;
+        font-weight: 500;
+    }
+
+    /* Back Button */
+    .action-footer {
+        margin-top: 2rem;
+        display: flex;
+        justify-content: center;
+    }
+
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 2rem;
+        background: white;
+        color: #1e293b;
+        border: 2px solid #e2e8f0;
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 1rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .btn-back:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        color: #1e293b;
+    }
+
+    .btn-back i {
+        font-size: 1rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .queue-page {
+            padding: 1.5rem;
+        }
+
+        .queue-header {
+            padding: 1.5rem 2rem;
+        }
+
+        .queue-top {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .queue-stats {
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        .table-header {
+            padding: 1rem 1.5rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .queue-title {
+            font-size: 1.4rem;
+        }
+
+        .queue-title-section {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .queue-icon-box {
+            width: 48px;
+            height: 48px;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+        }
+
+        .empty-state {
+            padding: 2rem 1.5rem;
+        }
+
+        .empty-icon {
+            width: 70px;
+            height: 70px;
+        }
+
+        .empty-icon i {
+            font-size: 2rem;
+        }
+
+        .empty-title {
+            font-size: 1.25rem;
+        }
+    }
+</style>
+
+<div class="queue-page">
+    <div class="queue-container">
+
+        {# Header Section #}
+        <div class="queue-header">
+            <div class="queue-top">
+                <div class="queue-title-section">
+                    <div class="queue-icon-box">
+                        <i class="fas {{ queue_icon }}"></i>
+                    </div>
+                    <h1 class="queue-title">{{ queue_name }}</h1>
+                </div>
+                <div class="queue-badge">ACTION HUB</div>
             </div>
-        </div>
-    {% else %}
-        <div class="alert alert-success shadow-sm mb-5">
-            <i class="fas fa-check-circle me-2"></i> This queue is currently empty. Good job!
-        </div>
-    {% endif %}
+            
+            <div class="queue-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Total Tickets</span>
+                    <span class="stat-value">{{ ticket_count_formatted }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Queue Status</span>
+                    <span class="stat-value" style="font-size: 1.25rem;">
+                        {% if tickets %}Active{% else %}Clear{% endif %}
+                    </span>
+                </div>
+            </div>
 
-    <a href="{% url 'support_dashboard' %}" class="btn btn-outline-secondary mt-3">
-        <i class="fas fa-arrow-left me-2"></i> Back to Action Hub
-    </a>
+            <p class="queue-description">
+                <i class="fas fa-info-circle me-2"></i>
+                Below is the complete list of tickets in this queue, sorted by priority.
+            </p>
+        </div>
 
+        {# Ticket Table or Empty State #}
+        {% if tickets %}
+            <div class="table-card">
+                <div class="table-header">
+                    <h2 class="table-title">Queue Tickets</h2>
+                    <span class="table-count">{{ tickets|length }} ticket{{ tickets|length|pluralize }}</span>
+                </div>
+                <div class="table-responsive">
+                    {% include 'accounts/includes/ticket_table.html' with tickets=tickets is_support_view=is_support_view is_feedback_queue=is_feedback_queue %}
+                </div>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3 class="empty-title">All Clear!</h3>
+                <p class="empty-message">This queue is currently empty. Great work!</p>
+            </div>
+        {% endif %}
+
+        {# Back Button #}
+        <div class="action-footer">
+            <a href="{% url 'support_dashboard' %}" class="btn-back">
+                <i class="fas fa-arrow-left"></i>
+                Back to Action Hub
+            </a>
+        </div>
+
+    </div>
 </div>
 {% endblock %}

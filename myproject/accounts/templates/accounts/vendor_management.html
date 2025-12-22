@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Vendor Management{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="admin-hero mb-4">
+        <div class="d-flex justify-content-between align-items-center bg-dark text-white p-3 rounded-top border-bottom border-info border-3">
+            <h2 class="h5 mb-0"><i class="fa-solid fa-file-contract me-2"></i> Vendor & Contract Management</h2>
+            <button class="btn btn-info btn-sm fw-bold">Add Vendor</button>
+        </div>
+        <div class="bg-white p-3 shadow-sm rounded-bottom">
+            <p class="text-muted small mb-0">Monitoring active service contracts and upcoming renewals.</p>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Vendor Name</th>
+                        <th>Contact Person</th>
+                        <th>Support Email</th>
+                        <th>Contract Expiry</th>
+                        <th class="pe-4">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for vendor in expiring_vendors %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-primary">{{ vendor.vendor_name }}</td>
+                        <td>{{ vendor.contact_person }}</td>
+                        <td>{{ vendor.support_email }}</td>
+                        <td class="fw-bold {% if vendor.is_urgent %}text-danger{% endif %}">{{ vendor.contract_expiry }}</td>
+                        <td class="pe-4"><span class="badge bg-success">Active</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center py-5 text-muted">No vendors registered.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

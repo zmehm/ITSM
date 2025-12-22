@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Incident Lifecycle Tracker{% endblock %}
+
+{% block content %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap');
+
+    .tracker-page {
+        font-family: 'Outfit', sans-serif;
+        background: #f8fafc;
+        min-height: 100vh;
+        padding: 1.5rem 2rem;
+    }
+
+    /* --- THEMED COMPACT HEADER --- */
+    .tracker-hero {
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+
+    .tracker-header-bar {
+        background: #1e293b; 
+        padding: 0.75rem 1.5rem;
+        border-bottom: 3px solid #db2777; /* Admin Pink Accent */
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .tracker-title {
+        color: white;
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    /* --- DATA CARDS --- */
+    .data-card {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 2rem;
+    }
+
+    .card-label {
+        padding: 1rem 1.5rem;
+        background: #f8fafc;
+        font-weight: 800;
+        font-size: 0.75rem;
+        color: #475569;
+        text-transform: uppercase;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    /* --- TABLE THEME --- */
+    .table thead th {
+        background: white;
+        color: #64748b;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        padding: 1rem 1.5rem;
+    }
+
+    .table tbody td {
+        padding: 1.1rem 1.5rem;
+        font-size: 0.85rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .badge-status {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+    }
+</style>
+
+<div class="tracker-page">
+    <div class="container-fluid">
+
+        {# --- 1. THEMED HEADER --- #}
+        <div class="tracker-hero">
+            <div class="tracker-header-bar">
+                <h2 class="tracker-title">
+                    <i class="fa-solid fa-gauge-high me-2"></i> Global Incident Lifecycle Tracker
+                </h2>
+                <span class="badge bg-light text-dark fw-bold" style="font-size: 0.7rem;">OVERSIGHT MODE</span>
+            </div>
+            <div class="p-3 bg-white">
+                <p class="text-muted mb-0 small">Monitoring real-time incident flow, aging thresholds, and resolution integrity.</p>
+            </div>
+        </div>
+
+        {# --- 2. GLOBAL INCIDENT FLOW --- #}
+        <div class="data-card">
+            <div class="card-label">Global Incident Flow: All Active & Recent Tickets</div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Ticket #</th>
+                            <th>Summary</th>
+                            <th>Reported By</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Created On</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for incident in all_tracked_incidents %}
+                        <tr>
+                            <td><strong style="color: #db2777;">#{{ incident.incident_number }}</strong></td>
+                            <td class="text-secondary">{{ incident.description|truncatechars:35 }}</td>
+                            <td>{{ incident.empID.get_full_name|default:incident.empID.email }}</td>
+                            <td>
+                                <span class="badge-status {% if incident.status == 'CLOSED' %}bg-success text-white{% else %}bg-info text-dark{% endif %}">
+                                    {{ incident.status }}
+                                </span>
+                            </td>
+                            <td class="fw-bold">{{ incident.priority }}</td>
+                            <td class="small text-muted">
+                                {{ incident.created_on|date:"M d, Y" }} {{ incident.created_time }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-inbox fa-2x mb-3 d-block opacity-25"></i>
+                                No incidents found in the system.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {# --- 3. AGING MONITOR --- #}
+        <div class="data-card">
+            <div class="card-label">Aging Monitor: Tickets Inactive > 24 Hours</div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Ticket #</th>
+                            <th>Status</th>
+                            <th>Date Reported</th>
+                            <th>Assigned To</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for incident in aging_incidents %}
+                        <tr>
+                            <td><strong>#{{ incident.incident_number }}</strong></td>
+                            <td><span class="badge-status bg-warning text-dark">{{ incident.status }}</span></td>
+                            <td class="text-danger fw-bold">{{ incident.created_on }}</td>
+                            <td>{{ incident.assigned_to.get_full_name|default:"Unassigned" }}</td>
+                            <td><button class="btn btn-sm btn-outline-dark">Review Flow</button></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-center py-4 text-muted small">No incidents currently exceeding aging thresholds.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {# --- 4. REOPEN TRENDS --- #}
+        <div class="data-card">
+            <div class="card-label">Resolution Integrity: Reopened Incidents</div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Ticket #</th>
+                            <th>Original Resolver</th>
+                            <th>Last Update</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for incident in reopened_incidents %}
+                        <tr>
+                            <td><strong>#{{ incident.incident_number }}</strong></td>
+                            <td>{{ incident.assigned_to.get_full_name|default:"Support Staff" }}</td>
+                            <td class="text-secondary small">{{ incident.resolved_date|default:incident.created_on }}</td>
+                            <td><span class="badge-status bg-danger text-white">REOPENED</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center py-4 text-muted small">Resolution integrity is currently 100%.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

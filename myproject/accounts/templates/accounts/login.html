@@ -2,13 +2,10 @@
 
 {% block content %}
 <style>
-    /* Hide the top bar and sidebar for login page */
     .app-topbar,
     .sidebar {
         display: none !important;
     }
-
-    /* Full screen login */
     body, html {
         height: 100%;
         margin: 0;
@@ -24,8 +21,6 @@
         margin-left: 0 !important;
         width: 100% !important;
     }
-
-    /* Remove top bar padding and add custom background */
     .content-body {
         padding: 0 !important;
         min-height: 100vh;
@@ -37,8 +32,6 @@
         position: relative;
         overflow: hidden;
     }
-
-    /* Animated background particles */
     .login-particles {
         position: absolute;
         top: 0;
@@ -74,8 +67,6 @@
             opacity: 0;
         }
     }
-
-    /* Login card styling */
     .login-container {
         position: relative;
         z-index: 1;
@@ -104,8 +95,6 @@
             transform: scale(1) translateY(0);
         }
     }
-
-    /* Logo and title */
     .login-title {
         font-size: 2rem;
         font-weight: 800;
@@ -116,15 +105,12 @@
         text-align: center;
         margin-bottom: 0.5rem;
     }
-
     .login-subtitle {
         text-align: center;
         color: #64748b;
         font-size: 0.95rem;
         margin-bottom: 1.5rem;
     }
-
-    /* Form styling */
     .form-group {
         margin-bottom: 1.25rem;
         position: relative;
@@ -159,8 +145,6 @@
     .form-control:hover {
         border-color: #cbd5e1;
     }
-
-    /* Input with icon */
     .input-icon {
         position: absolute;
         right: 1rem;
@@ -169,12 +153,9 @@
         cursor: pointer;
         transition: color 0.3s ease;
     }
-
     .input-icon:hover {
         color: #667eea;
     }
-
-    /* Primary button */
     .btn-login {
         width: 100%;
         padding: 0.875rem;
@@ -199,8 +180,6 @@
     .btn-login:active {
         transform: translateY(-1px);
     }
-
-    /* Links */
     .login-link {
         color: #667eea;
         text-decoration: none;
@@ -228,8 +207,6 @@
     .mt-4 {
         margin-top: 1.25rem;
     }
-
-    /* Divider */
     .divider {
         display: flex;
         align-items: center;
@@ -237,7 +214,6 @@
         color: #94a3b8;
         font-size: 0.875rem;
     }
-
     .divider::before,
     .divider::after {
         content: '';
@@ -249,8 +225,6 @@
     .divider span {
         padding: 0 1rem;
     }
-
-    /* Secondary button (Create account) */
     .btn-secondary {
         width: 100%;
         padding: 0.875rem;
@@ -340,9 +314,7 @@
 <div class="login-container">
     <div class="login-card">
         <!-- Title -->
-        <h1 class="login-title">ITSM Portal</h1>
-        <p class="login-subtitle">Welcome back! Please login to continue</p>
-
+        <h1 class="login-title">Login</h1>
         <!-- Login Form -->
         <form method="POST" action="{% url 'login_view' %}">
             {% csrf_token %}
@@ -363,7 +335,7 @@
 
             <!-- Forgotten username link -->
             <div class="text-center mt-2">
-                <a href="#" class="login-link">Forgotten username?</a>
+                <a href="#" class="login-link">Forgot Password?</a>
             </div>
 
             <!-- Submit button -->

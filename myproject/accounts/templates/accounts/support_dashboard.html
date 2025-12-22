@@ -1,277 +1,270 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ITSM Portal - Support Work Queue</title>
+{% block content %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap');
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
-          integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" 
-          crossorigin="anonymous" referrerpolicy="no-referrer" />
+    .dashboard-page {
+        font-family: 'Outfit', sans-serif;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+        min-height: 100vh;
+        padding: 3rem 2rem;
+    }
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
 
-    <style>
-        :root {
-            --sidebar-width: 260px;
-            --sidebar-collapsed-width: 60px;
-            --sidebar-bg: #1f2933;
-            --sidebar-bg-dark: #151b23;
-            --sidebar-text: #e5ecff;
-            --sidebar-text-muted: #9ca9c9;
-            --sidebar-active: #2563eb;
-            --content-bg: #f5f7fb;
-            --topbar-height: 50px;
-            --accent-red: #ef4444;
-            --accent-blue: #3b82f6;
-            --accent-brown: #92400e;
+    /* Hero Title - Centered */
+    .hero-section {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .hero-icon {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .hero-icon i {
+        font-size: 2.5rem;
+        background: linear-gradient(135deg, #fb923c, #f59e0b);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: white;
+        margin-bottom: 0.5rem;
+        letter-spacing: -1px;
+    }
+
+    .hero-subtitle {
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.7);
+        font-weight: 600;
+    }
+
+    /* KPI Cards with Light Theme */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+    }
+
+    .kpi-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: block;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 3px solid transparent;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        transition: height 0.3s ease;
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+    }
+
+    .kpi-card:hover::before {
+        height: 100%;
+        opacity: 0.05;
+    }
+
+    /* Color Variants - Softer Pastels */
+    .kpi-card.variant-coral::before {
+        background: #fb923c;
+    }
+
+    .kpi-card.variant-coral:hover {
+        border-color: #fb923c;
+    }
+
+    .kpi-card.variant-mint::before {
+        background: #34d399;
+    }
+
+    .kpi-card.variant-mint:hover {
+        border-color: #34d399;
+    }
+
+    .kpi-card.variant-lavender::before {
+        background: #a78bfa;
+    }
+
+    .kpi-card.variant-lavender:hover {
+        border-color: #a78bfa;
+    }
+
+    .icon-box {
+        width: 70px;
+        height: 70px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .icon-box.coral {
+        background: linear-gradient(135deg, #fed7aa, #fdba74);
+        color: #c2410c;
+    }
+
+    .icon-box.mint {
+        background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+        color: #065f46;
+    }
+
+    .icon-box.lavender {
+        background: linear-gradient(135deg, #e9d5ff, #d8b4fe);
+        color: #6b21a8;
+    }
+
+    .kpi-label {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+
+    .kpi-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #1e293b;
+        line-height: 1;
+    }
+
+    .kpi-description {
+        font-size: 0.875rem;
+        color: #64748b;
+        margin-top: 0.75rem;
+        font-weight: 500;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .kpi-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
         }
 
-        html, body {
-            height: 100%;
-            margin: 0;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background-color: var(--content-bg) !important;
-        }
-        
-        .layout { display: flex; min-height: 100vh; }
-
-        .content {
-            flex: 1;
-            padding: 0;
-            background-color: var(--content-bg) !important; 
-            overflow-x: hidden;
-            position: relative;
-            margin-left: var(--sidebar-width);
-            transition: margin-left 0.3s ease;
+        .hero-title {
+            font-size: 2rem;
         }
 
-        .content.sidebar-collapsed { margin-left: var(--sidebar-collapsed-width); }
-
-        .sidebar {
-            width: var(--sidebar-width);
-            background: linear-gradient(180deg, var(--sidebar-bg), var(--sidebar-bg-dark));
-            color: var(--sidebar-text);
-            padding: 1.5rem 0;
-            position: fixed;
-            top: var(--topbar-height);
-            bottom: 0; 
-            left: 0;
-            z-index: 90;
-            transition: width 0.3s ease;
+        .hero-icon {
+            width: 70px;
+            height: 70px;
         }
 
-        .sidebar.collapsed { width: var(--sidebar-collapsed-width); }
+        .hero-icon i {
+            font-size: 2rem;
+        }
+    }
 
-        .sidebar-toggle {
-            width: 40px; height: 40px;
-            background: transparent;
-            border: 1px solid rgba(229, 236, 255, 0.2);
-            color: var(--sidebar-text);
-            cursor: pointer;
-            border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            flex-direction: column; gap: 5px;
-            margin: 0 0 1.5rem 1.25rem;
+    @media (max-width: 576px) {
+        .dashboard-page {
+            padding: 2rem 1rem;
         }
 
-        .sidebar-toggle span { width: 20px; height: 2px; background-color: var(--sidebar-text); display: block; }
-
-        .sidebar-content { padding: 0 1.25rem; }
-
-        .nav-section-title {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            color: var(--sidebar-text-muted);
-            margin-top: 1.25rem;
-            margin-bottom: 0.5rem;
+        .hero-title {
+            font-size: 1.75rem;
         }
 
-        .sidebar .list-group-item {
-            background-color: transparent; border: none;
-            color: var(--sidebar-text); padding: 0.55rem 0.75rem;
-            border-radius: 0.7rem; margin-bottom: 0.1rem;
-            text-decoration: none; font-size: 0.92rem;
-            display: flex; align-items: center;
+        .hero-subtitle {
+            font-size: 1rem;
         }
 
-        .sidebar .list-group-item.active {
-            background: linear-gradient(135deg, #2563eb, #4f46e5);
-            color: #fff;
-        }
-        
-        .app-topbar {
-            height: var(--topbar-height);
-            background-color: var(--sidebar-bg); 
-            border-bottom: 1px solid #10151c; 
-            padding: 0 2rem; 
-            display: flex; align-items: center; justify-content: space-between; 
-            position: fixed; top: 0; width: 100%; z-index: 100;
-        }
-        
-        .app-topbar .navbar-brand { color: white !important; font-weight: 600; font-size: 1.25rem; display: flex; align-items: center; }
-
-        .content-body { padding: 1.5rem 2rem; padding-top: calc(var(--topbar-height) + 1.5rem); }
-
-        /* --- DASHBOARD SPECIFIC --- */
-        .dashboard-title {
-            font-size: 2rem; font-weight: 800;
-            background: linear-gradient(135deg, #2563eb, #7c3aed, #db2777);
-            -webkit-background-clip: text;
-            background-clip: text; /* Compatibility Fix */
-            -webkit-text-fill-color: transparent;
-            color: transparent;
-            display: inline-flex; align-items: center; gap: 1rem;
+        .kpi-value {
+            font-size: 2rem;
         }
 
-        .stats-grid { display: flex; flex-direction: column; gap: 1rem; max-width: 700px; margin: 0 auto; }
-
-        .stat-card {
-            border-radius: 16px; padding: 0; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-            text-decoration: none; overflow: hidden; border: 2px solid rgba(0, 0, 0, 0.05);
-            display: grid; grid-template-columns: 1fr 1fr; align-items: center;
+        .icon-box {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
         }
+    }
+</style>
 
-        .stat-card.red { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); }
-        .stat-card.blue { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); }
-        .stat-card.brown { background: linear-gradient(135deg, #d2691e 0%, #8b4513 100%); }
+<div class="dashboard-page">
+    <div class="dashboard-container">
 
-        .stat-card-body { padding: 1.25rem 1.5rem; color: white; }
-        .stat-number { font-size: 2.5rem; font-weight: 900; }
-        .stat-icon { font-size: 2rem; grid-column: 2/3; margin-left: auto; margin-right: 1.25rem; color: rgba(255,255,255,0.5); }
-        .stat-footer { grid-column: 1/3; background: rgba(255,255,255,0.4); padding: 0.8rem 1.5rem; font-size: 0.8rem; color: white; display: flex; justify-content: space-between; }
-
-        .particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.4; }
-        .particle { position: absolute; width: 4px; height: 4px; background: rgba(59, 130, 246, 0.4); border-radius: 50%; animation: float 20s infinite; }
-        @keyframes float { 0%, 100% { transform: translateY(0); opacity: 0; } 10%, 90% { opacity: 1; } 100% { transform: translateY(-100vh); opacity: 0; } }
-    </style>
-</head>
-
-<body>
-    <div class="layout"> 
-        <div class="app-topbar">
-            <a class="navbar-brand" href="{% url 'home' %}">
-                <div class="sidebar-logo me-2" style="width: 25px; height: 25px; border-radius: 5px; background: linear-gradient(135deg, #2563eb, #4f46e5); display: flex; align-items: center; justify-content: center;">
-                    <i class="fa-solid fa-angle-up" style="font-size: 0.8rem; color: #fff;"></i>
-                </div>
-                ITSM Admin
-            </a>
-            <div class="d-flex align-items-center">
-                <a href="{% url 'home' %}" class="btn btn-warning btn-md-custom me-3">Dashboard</a>
-                <a href="{% url 'logout_view' %}" class="btn btn-danger btn-md-custom">Logout</a>
+        <!-- Hero Section - Centered -->
+        <div class="hero-section">
+            <div class="hero-icon">
+                <i class="fa-solid fa-rocket"></i>
             </div>
+            <h1 class="hero-title">IT Support Command Center</h1>
         </div>
-        
-        <aside class="sidebar" id="sidebar">
-            <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
-                <span></span><span></span><span></span>
-            </button>
-            <div class="sidebar-content">
-                <div class="nav-section-title">Navigation</div>
-                <div class="list-group list-group-flush">
-                    <a href="{% url 'home' %}" class="list-group-item active">
-                        <i class="fa-solid fa-house me-3"></i> <span class="item-text">Dashboard</span>
-                    </a>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+            
+            <!-- High Priority -->
+            <a href="{% url 'unassigned_queue' %}" class="kpi-card variant-coral">
+                <div class="icon-box coral">
+                    <i class="fa-solid fa-radiation"></i>
                 </div>
+                <div class="kpi-label">High Priority</div>
+                <div class="kpi-value">{{ unassigned_count_formatted }}</div>
+                <div class="kpi-description">Unassigned tickets requiring immediate attention</div>
+            </a>
 
-                <div class="nav-section-title mt-3">ITSM Modules</div>
-                <div class="list-group list-group-flush">
-                    <a href="{% url 'create_incident' %}" class="list-group-item">
-                        <i class="fa-solid fa-triangle-exclamation me-3"></i> <span class="item-text">Create Incident</span>
-                    </a>
-                    <a href="{% url 'incident_list' %}" class="list-group-item">
-                        <i class="fa-solid fa-list-check me-3"></i> <span class="item-text">View My Incidents</span>
-                    </a>
-                    
-                    {% if request.user.role != 'USER' %}
-                    <a href="{% url 'problem_management' %}" class="list-group-item">
-                        <i class="fa-solid fa-bug me-3"></i> <span class="item-text">Problem Management</span>
-                    </a>
-                    <a href="{% url 'change_management' %}" class="list-group-item">
-                        <i class="fa-solid fa-arrows-rotate me-3"></i> <span class="item-text">Change Management</span>
-                    </a>
-                    <a href="{% url 'sla_management' %}" class="list-group-item">
-                        <i class="fa-solid fa-clock-rotate-left me-3"></i> <span class="item-text">SLA Management</span>
-                    </a>
-                    <a href="{% url 'asset_management' %}" class="list-group-item">
-                        <i class="fa-solid fa-laptop-medical me-3"></i> <span class="item-text">Asset Management</span>
-                    </a>
-                    {% endif %}
-                    
-                    <a href="{% url 'logout_view' %}" class="list-group-item mt-3 text-danger border border-danger border-opacity-25">
-                        <i class="fa-solid fa-right-from-bracket me-3"></i> <span class="item-text">Logout</span>
-                    </a>
+            <!-- Active Tasks -->
+            <a href="{% url 'my_active_tickets' %}" class="kpi-card variant-mint">
+                <div class="icon-box mint">
+                    <i class="fa-solid fa-helmet-safety"></i>
                 </div>
-            </div>
-        </aside>
+                <div class="kpi-label">Active Tasks</div>
+                <div class="kpi-value">{{ my_tickets_count_formatted }}</div>
+                <div class="kpi-description">Tickets currently assigned to you</div>
+            </a>
 
-        <main class="content" id="mainContent">
-            <div class="content-body">
-                <div class="particles" id="particles"></div>
-                <div class="container-fluid dashboard-content">
-                    <div class="dashboard-header text-center mb-5">
-                        <h1 class="dashboard-title"><i class="fa-solid fa-rocket"></i> IT Support Command Center</h1>
-                        <p class="text-secondary">Monitor and manage your support tickets in real-time</p>
-                    </div>
-
-                    <div class="stats-grid">
-                        <a href="{% url 'unassigned_queue' %}" class="stat-card red">
-                            <div class="stat-card-body">
-                                <div class="stat-info">
-                                    <h3>High Priority</h3>
-                                    <div class="stat-number">{{ unassigned_count_formatted }}</div>
-                                </div>
-                                <p class="stat-description">Unassigned tickets requiring triage</p>
-                            </div>
-                            <div class="stat-icon"><i class="fa-solid fa-radiation"></i></div>
-                            <div class="stat-footer"><span>View Unassigned Queue</span> <i class="fa-solid fa-arrow-right"></i></div>
-                        </a>
-
-                        <a href="{% url 'my_active_tickets' %}" class="stat-card blue">
-                            <div class="stat-card-body">
-                                <div class="stat-info">
-                                    <h3>Active Tasks</h3>
-                                    <div class="stat-number">{{ my_tickets_count_formatted }}</div>
-                                </div>
-                                <p class="stat-description">Tickets assigned to you</p>
-                            </div>
-                            <div class="stat-icon"><i class="fa-solid fa-helmet-safety"></i></div>
-                            <div class="stat-footer"><span>View My Tickets</span> <i class="fa-solid fa-arrow-right"></i></div>
-                        </a>
-
-                        <a href="{% url 'feedback_queue' %}" class="stat-card brown">
-                            <div class="stat-card-body">
-                                <div class="stat-info">
-                                    <h3>Pending Review</h3>
-                                    <div class="stat-number">{{ feedback_count_formatted }}</div>
-                                </div>
-                                <p class="stat-description">Resolved tickets pending closure</p>
-                            </div>
-                            <div class="stat-icon"><i class="fa-solid fa-hourglass-half"></i></div>
-                            <div class="stat-footer"><span>View Feedback Queue</span> <i class="fa-solid fa-arrow-right"></i></div>
-                        </a>
-                    </div>
+            <!-- Pending Review -->
+            <a href="{% url 'feedback_queue' %}" class="kpi-card variant-lavender">
+                <div class="icon-box lavender">
+                    <i class="fa-solid fa-hourglass-half"></i>
                 </div>
-            </div>
-        </main>
+                <div class="kpi-label">Pending Review</div>
+                <div class="kpi-value">{{ feedback_count_formatted }}</div>
+                <div class="kpi-description">Awaiting user feedback and closure</div>
+            </a>
+
+        </div>
+
     </div>
-
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script>
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('collapsed');
-            document.getElementById('mainContent').classList.toggle('sidebar-collapsed');
-        }
-        const container = document.getElementById('particles');
-        for (let i = 0; i < 30; i++) {
-            const p = document.createElement('div');
-            p.className = 'particle';
-            p.style.left = Math.random() * 100 + '%';
-            p.style.animationDelay = Math.random() * 20 + 's';
-            container.appendChild(p);
-        }
-    </script>
-</body>
-</html>
+</div>
+{% endblock %}

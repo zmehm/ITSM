@@ -3,7 +3,8 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from datetime import timedelta
-from .models import LoginMonitor, Incident, SLAManagement
+from .models import LoginMonitor, Incident, SLAManagement,Vendor, SecurityManagement, BackupManagement, AuditManagement
+from django.db.models.signals import pre_save
 
 # --- UTILITY: GET CLIENT IP ADDRESS ---
 def get_client_ip(request):
@@ -74,4 +75,23 @@ def auto_create_incident_sla(sender, instance, created, **kwargs):
             sla_status='Active' #
         )
 
-
+@receiver(pre_save, sender=Vendor)
+@receiver(pre_save, sender=SecurityManagement)
+def track_admin_changes(sender, instance, **kwargs):
+    """
+    Automatically captures the 'Before' and 'After' values of Admin records
+    to populate the AuditManagement trail.
+    """
+    if instance.pk:  # Only track updates to existing records
+        try:
+            old_obj = sender.objects.get(pk=instance.pk)
+            # Example: Tracking status changes
+            if old_obj.status != instance.status:
+                AuditManagement.objects.create(
+                    performed_by="System Admin",  # In a real app, track request.user
+                    action_type=f"Update {sender.__name__}",
+                    old_value=f"Status: {old_obj.status}",
+                    new_value=f"Status: {instance.status}"
+                )
+        except sender.DoesNotExist:
+            pass

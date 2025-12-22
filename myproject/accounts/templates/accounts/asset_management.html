@@ -1,54 +1,207 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Asset Inventory{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="dashboard-title"><i class="fa-solid fa-laptop-medical me-2"></i> Asset & Inventory</h2>
-        <button class="btn btn-primary btn-sm"><i class="fa-solid fa-plus me-1"></i> Add Asset</button>
-    </div>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap');
 
-    <div class="row">
-        {% for asset in assets %}
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-header bg-white border-0 pt-3">
-                    <div class="d-flex justify-content-between">
-                        <span class="badge bg-info text-dark">{{ asset.catID.name }}</span>
-                        <span class="text-muted small">ID: #{{ asset.id }}</span>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <h5 class="card-title fw-bold">{{ asset.name }}</h5>
-                    <p class="card-text text-muted mb-2"><i class="fa-solid fa-barcode me-2"></i>SN: {{ asset.serial_number }}</p>
-                    <hr class="opacity-10">
-                    <div class="small">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span>Custodian:</span>
-                            <span class="fw-semibold">{{ asset.custodian_id.get_full_name|default:asset.custodian_id.email }}</span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-1">
-                            <span>Status:</span>
-                            <span class="text-success">{{ asset.status }}</span>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <span>Warranty Expiry:</span>
-                            <span class="text-danger">{{ asset.warranty_expiry }}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-footer bg-light border-0 py-2">
-                    <small class="text-muted">Last Audit: {{ asset.last_audit_date }}</small>
-                </div>
+    .asset-page {
+        font-family: 'Outfit', sans-serif;
+        background: #f8fafc;
+        min-height: 100vh;
+        padding: 1.5rem 2rem;
+    }
+
+    /* --- THEMED COMPACT HEADER --- */
+    .asset-hero {
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+
+    .asset-header-bar {
+        background: #1e293b; /* Dark theme consistency */
+        padding: 0.75rem 1.5rem;
+        border-bottom: 3px solid #3b82f6; /* Blue accent for Asset Management */
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .asset-title {
+        color: white;
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .btn-add-asset {
+        background: #3b82f6;
+        color: white;
+        font-weight: 700;
+        border-radius: 6px;
+        padding: 0.4rem 1rem;
+        font-size: 0.8rem;
+        border: none;
+        transition: 0.2s;
+    }
+
+    .btn-add-asset:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+    }
+
+    /* --- ASSET CARD GRID --- */
+    .asset-grid-card {
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .asset-grid-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 25px rgba(0,0,0,0.08);
+    }
+
+    .asset-card-header {
+        padding: 1.25rem;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .category-pill {
+        padding: 2px 10px;
+        background: #eff6ff;
+        color: #1e40af;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+    }
+
+    .asset-id-label {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        font-weight: 600;
+    }
+
+    .asset-card-body {
+        padding: 1.25rem;
+        flex-grow: 1;
+    }
+
+    .asset-name {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+
+    .asset-serial {
+        font-size: 0.8rem;
+        color: #64748b;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* --- INFO ROWS --- */
+    .asset-info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        font-size: 0.85rem;
+    }
+
+    .info-label { font-weight: 600; color: #64748b; }
+    .info-value { font-weight: 700; color: #1e293b; }
+
+    .status-active { color: #10b981; }
+    .warranty-warn { color: #ef4444; }
+
+    .asset-card-footer {
+        background: #f8fafc;
+        padding: 0.75rem 1.25rem;
+        border-top: 1px solid #f1f5f9;
+        font-size: 0.75rem;
+        color: #94a3b8;
+        font-weight: 600;
+    }
+</style>
+
+<div class="asset-page">
+    <div class="container-fluid">
+
+        {# --- 1. THEMED COMPACT HEADER --- #}
+        <div class="asset-hero">
+            <div class="asset-header-bar">
+                <h2 class="asset-title">
+                    <i class="fa-solid fa-laptop-medical me-2"></i> Asset & Inventory
+                </h2>
+                <button class="btn-add-asset"><i class="fa-solid fa-plus me-1"></i> Add Asset</button>
+            </div>
+            <div class="p-3 bg-white">
+                <p class="text-muted mb-0 small">Manage hardware lifecycle, custodian assignments, and warranty tracking.</p>
             </div>
         </div>
-        {% empty %}
-        <div class="col-12 text-center py-5">
-            <i class="fa-solid fa-boxes-stacked fa-3x text-light mb-3"></i>
-            <p class="text-muted">No assets registered in the inventory.</p>
+
+        {# --- 2. ASSET GRID --- #}
+        <div class="row g-4">
+            {% for asset in assets %}
+            <div class="col-md-4">
+                <div class="asset-grid-card">
+                    <div class="asset-card-header">
+                        <span class="category-pill">{{ asset.catID.name }}</span>
+                        <span class="asset-id-label">#{{ asset.id }}</span>
+                    </div>
+                    
+                    <div class="asset-card-body">
+                        <h5 class="asset-name">{{ asset.name }}</h5>
+                        <div class="asset-serial mb-3">
+                            <i class="fa-solid fa-barcode"></i> SN: {{ asset.serial_number }}
+                        </div>
+                        
+                        <div class="asset-info-row">
+                            <span class="info-label">Custodian:</span>
+                            <span class="info-value">{{ asset.custodian_id.get_full_name|default:asset.custodian_id.email }}</span>
+                        </div>
+                        <div class="asset-info-row">
+                            <span class="info-label">Status:</span>
+                            <span class="info-value status-active">{{ asset.status }}</span>
+                        </div>
+                        <div class="asset-info-row">
+                            <span class="info-label">Warranty Expiry:</span>
+                            <span class="info-value warranty-warn">{{ asset.warranty_expiry }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="asset-card-footer">
+                        <i class="fa-solid fa-calendar-check me-1"></i> Last Audit: {{ asset.last_audit_date|default:"Never" }}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5">
+                <div class="p-5 bg-white rounded-4 shadow-sm border border-dashed" style="border-width: 2px;">
+                    <i class="fa-solid fa-boxes-stacked fa-3x text-light mb-3"></i>
+                    <p class="text-muted fw-bold">No assets registered in the inventory.</p>
+                </div>
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
+
     </div>
 </div>
 {% endblock %}

@@ -5,7 +5,7 @@ from .models import (
     Subsidiary, Department, Grade, Discipline, Impact,
     IncidentTracking, ServiceRequest, LoginMonitor, 
     Asset, SLAManagement, RootCauseCat, RcSubcat, 
-    ProblemManagement, ProblemCase, TicketFeedback
+    ProblemManagement, ProblemCase, TicketFeedback,Vendor, SecurityManagement, BackupManagement, AuditManagement
 )
 
 # --- 1. Master Data Registration ---
@@ -190,3 +190,33 @@ class ProblemCaseAdmin(admin.ModelAdmin):
     """Monitors patterns of frequent failures"""
     list_display = ('name', 'rc_catID', 'freq_count', 'active', 'detected_on')
     list_filter = ('active', 'rc_catID')
+
+
+
+
+@admin.register(Vendor)
+class VendorAdmin(admin.ModelAdmin):
+    """Manages external service providers and contracts"""
+    list_display = ('vendor_name', 'contact_person', 'support_email', 'contract_expiry', 'status')
+    list_filter = ('status', 'asset_category')
+    search_fields = ('vendor_name', 'support_email', 'account_number')
+
+@admin.register(SecurityManagement)
+class SecurityAdmin(admin.ModelAdmin):
+    """Tracks system threats and resolution status"""
+    list_display = ('threat_type', 'severity', 'affected_asset', 'status', 'detected_on')
+    list_filter = ('severity', 'status')
+    readonly_fields = ('detected_on', 'detected_time')
+
+@admin.register(BackupManagement)
+class BackupAdmin(admin.ModelAdmin):
+    """Monitors data safety and backup schedules"""
+    list_display = ('target_asset', 'backup_type', 'last_success_date', 'next_schedule', 'status')
+    list_filter = ('status', 'backup_type')
+
+@admin.register(AuditManagement)
+class AuditAdmin(admin.ModelAdmin):
+    """Immutable log of administrative actions"""
+    list_display = ('timestamp', 'performed_by', 'action_type')
+    readonly_fields = ('timestamp', 'performed_by', 'action_type', 'old_value', 'new_value')
+    # Audits should generally be read-only to ensure integrity

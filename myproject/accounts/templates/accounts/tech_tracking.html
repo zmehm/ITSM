@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Technician Monitor{% endblock %}
+
+{% block content %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap');
+
+    .tracking-page {
+        font-family: 'Outfit', sans-serif;
+        background: #f8fafc;
+        min-height: 100vh;
+        padding: 1.5rem 2rem;
+    }
+
+    /* --- THEMED HEADER --- */
+    .tracking-hero {
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+
+    .tracking-header-bar {
+        background: #1e293b; 
+        padding: 0.75rem 1.5rem;
+        border-bottom: 3px solid #f59e0b; /* Orange accent for personnel tracking */
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .tracking-title { color: white; font-size: 1.15rem; font-weight: 700; margin: 0; }
+
+    /* --- DATA CARDS --- */
+    .perf-card {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+
+    .card-label {
+        padding: 1rem 1.5rem;
+        background: #f8fafc;
+        font-weight: 800;
+        font-size: 0.75rem;
+        color: #475569;
+        text-transform: uppercase;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    /* --- TABLE STYLING --- */
+    .table thead th {
+        background: white;
+        color: #64748b;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        padding: 1rem 1.5rem;
+    }
+
+    .table tbody td {
+        padding: 1.1rem 1.5rem;
+        font-size: 0.85rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    /* --- PROGRESS BAR - NO DYNAMIC CSS HERE --- */
+    .progress-custom-bg {
+        height: 8px;
+        background-color: #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+        width: 120px;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #10b981, #34d399);
+        border-radius: 10px;
+        width: 0%; /* Initial width for JS animation */
+        transition: width 0.8s ease-out;
+    }
+</style>
+
+<div class="tracking-page">
+    <div class="container-fluid">
+
+        {# --- 1. THEMED HEADER --- #}
+        <div class="tracking-hero">
+            <div class="tracking-header-bar">
+                <h2 class="tracking-title">
+                    <i class="fa-solid fa-user-gear me-2"></i> Support Personnel Performance Monitor
+                </h2>
+                <span class="badge bg-warning text-dark fw-bold">ADMIN OVERSIGHT</span>
+            </div>
+            <div class="p-3 bg-white">
+                <p class="text-muted small mb-0">Tracking personnel efficiency, active incident load, and SLA success rates.</p>
+            </div>
+        </div>
+
+        {# --- 2. PERFORMANCE DATA TABLE --- #}
+        <div class="perf-card">
+            <div class="card-label">Personnel Workload & Efficiency Metrics</div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">Technician</th>
+                            <th>Active Tickets</th>
+                            <th>Avg. Resolution</th>
+                            <th>SLA Success Rate</th>
+                            <th class="pe-4">Current Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tech in technicians %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px; border: 1px solid #e2e8f0;">
+                                        <i class="fa-solid fa-user text-secondary" style="font-size: 0.8rem;"></i>
+                                    </div>
+                                    <strong>{{ tech.get_full_name }}</strong>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-primary px-3">{{ tech.active_tickets_count|default:"0" }}</span></td>
+                            <td class="text-secondary">{{ tech.avg_resolution_time|default:"0.0" }} Hours</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress-custom-bg">
+                                        <div class="progress-fill js-progress-bar" 
+                                             data-width="{{ tech.sla_success_rate|default:100 }}">
+                                        </div>
+                                    </div>
+                                    <span class="fw-bold text-success">{{ tech.sla_success_rate|default:100 }}%</span>
+                                </div>
+                            </td>
+                            <td class="pe-4"><span class="badge bg-success text-white" style="font-size: 0.7rem;">Online</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-center py-5 text-muted">No personnel records found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const bars = document.querySelectorAll('.js-progress-bar');
+        bars.forEach(bar => {
+            const targetWidth = bar.getAttribute('data-width');
+            // Safely apply width without using Django tags in a style block
+            bar.style.width = targetWidth + '%';
+        });
+    });
+</script>
+{% endblock %}

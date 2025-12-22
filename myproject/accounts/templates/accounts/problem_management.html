@@ -1,29 +1,136 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Problem Management{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="dashboard-title"><i class="fa-solid fa-microscope me-2"></i> Problem Management & KEDB</h2>
-        <div class="btn-group">
-            <button class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-download me-1"></i> Export Report</button>
-            <button class="btn btn-primary btn-sm"><i class="fa-solid fa-plus me-1"></i> Log New Problem</button>
-        </div>
-    </div>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap');
 
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-header bg-white py-3">
-            <h5 class="mb-0 text-success fw-bold"><i class="fa-solid fa-chart-line me-2"></i> Recurring Incident Patterns (Problem Cases)</h5>
+    .problem-page {
+        font-family: 'Outfit', sans-serif;
+        background: #f8fafc;
+        min-height: 100vh;
+        padding: 1.5rem 2rem;
+    }
+
+    /* --- COMPACT THEMED HEADER --- */
+    .problem-hero {
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+
+    .problem-header-bar {
+        background: #1e293b; /* Matches New Incident theme */
+        padding: 0.75rem 1.5rem;
+        border-bottom: 3px solid #10b981; /* Green accent for Problem Management */
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .problem-title {
+        color: white;
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .btn-group-custom .btn {
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 0.5rem 1rem;
+    }
+
+    /* --- TABLE CARD STYLING --- */
+    .data-card {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .card-label {
+        padding: 1rem 1.5rem;
+        background: #ffffff;
+        border-bottom: 1px solid #edf2f7;
+    }
+
+    .card-label h5 {
+        font-size: 1rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    /* --- TABLE THEME --- */
+    .table thead th {
+        background: #f8fafc;
+        color: #475569;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        padding: 1rem;
+        border: none;
+    }
+
+    .table tbody td {
+        padding: 1.1rem 1rem;
+        vertical-align: middle;
+        font-size: 0.9rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    /* --- STATUS BADGES --- */
+    .status-pill {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+    }
+
+    .status-active { background: #dcfce7; color: #166534; }
+    .status-investigation { background: #e0f2fe; color: #075985; }
+    .status-kedb { background: #fef3c7; color: #92400e; }
+    .status-danger { background: #fee2e2; color: #991b1b; }
+</style>
+
+<div class="problem-page">
+    <div class="container-fluid">
+
+        {# --- 1. THEMED HEADER --- #}
+        <div class="problem-hero">
+            <div class="problem-header-bar">
+                <h2 class="problem-title">
+                    <i class="fa-solid fa-microscope me-2"></i> Problem Management
+                </h2>
+                <div class="btn-group-custom">
+                    <button class="btn btn-outline-light btn-sm me-2"><i class="fa-solid fa-download me-1"></i> Export</button>
+                    <button class="btn btn-success btn-sm"><i class="fa-solid fa-plus me-1"></i> Log New Problem</button>
+                </div>
+            </div>
+            <div class="p-3 bg-white">
+            </div>
         </div>
-        <div class="card-body p-0">
+
+        {# --- 2. RECURRING PATTERNS CARD --- #}
+        <div class="data-card">
+            <div class="card-label">
+                <h5 class="text-success"><i class="fa-solid fa-chart-line me-2"></i> Recurring Incident Patterns (Problem Cases)</h5>
+            </div>
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light">
+                <table class="table table-hover mb-0">
+                    <thead>
                         <tr>
                             <th>Case Name</th>
                             <th>Root Cause Category</th>
-                            <th>Frequency Count</th>
+                            <th>Frequency</th>
                             <th>Status</th>
                             <th>First Detected</th>
                         </tr>
@@ -40,35 +147,33 @@
                             </td>
                             <td>
                                 {% if case.active %}
-                                <span class="text-success"><i class="fa-solid fa-circle-check me-1"></i> Active Monitor</span>
+                                <span class="status-pill status-active"><i class="fa-solid fa-circle-check me-1"></i> Active</span>
                                 {% else %}
-                                <span class="text-muted">Inactive</span>
+                                <span class="text-muted small">Inactive</span>
                                 {% endif %}
                             </td>
-                            <td>{{ case.detected_on|default:"---" }}</td>
+                            <td class="text-secondary small">{{ case.detected_on|date:"M d, Y"|default:"---" }}</td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="5" class="text-center py-4">No recurring cases identified yet.</td></tr>
+                        <tr><td colspan="5" class="text-center py-5 text-muted">No recurring cases identified yet.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
-    </div>
 
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-white py-3">
-            <h5 class="mb-0 text-primary fw-bold"><i class="fa-solid fa-database me-2"></i> Problem Records & Root Cause Analysis</h5>
-        </div>
-        <div class="card-body p-0">
+        {# --- 3. PROBLEM RECORDS CARD --- #}
+        <div class="data-card">
+            <div class="card-label">
+                <h5 class="text-primary"><i class="fa-solid fa-database me-2"></i> Problem Records & Root Cause Analysis</h5>
+            </div>
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-dark">
-                        <tr>
+                <table class="table table-hover mb-0">
+                    <thead class="table-dark"> <tr>
                             <th>ID</th>
                             <th>Description</th>
                             <th>Category</th>
-                            <th>Known Issue</th>
+                            <th>KEDB Entry</th>
                             <th>Status</th>
                             <th>Restoration Delay</th>
                         </tr>
@@ -76,18 +181,18 @@
                     <tbody>
                         {% for problem in problems %}
                         <tr>
-                            <td>#{{ problem.id }}</td>
-                            <td>{{ problem.description|truncatewords:10 }}</td>
+                            <td class="fw-bold" style="color: #3b82f6;">#{{ problem.id }}</td>
+                            <td class="text-secondary">{{ problem.description|truncatewords:8 }}</td>
                             <td>{{ problem.root_cause_catID.name }}</td>
                             <td>
                                 {% if problem.known_issue %}
-                                <span class="badge bg-info text-dark">KEDB Entry</span>
+                                <span class="status-pill status-kedb">KEDB Entry</span>
                                 {% else %}
-                                <span class="text-muted small">Investigation</span>
+                                <span class="text-muted small">Under Review</span>
                                 {% endif %}
                             </td>
                             <td>
-                                <span class="badge {% if problem.status == 'open' %}bg-danger{% elif problem.status == 'in_progress' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                                <span class="status-pill {% if problem.status == 'open' %}status-danger{% elif problem.status == 'in_progress' %}status-investigation{% else %}status-active{% endif %}">
                                     {{ problem.status|upper }}
                                 </span>
                             </td>
@@ -95,17 +200,18 @@
                                 {% if problem.delays %}
                                 <span class="fw-bold text-danger">{{ problem.delays }} Days</span>
                                 {% else %}
-                                <span class="text-muted">In Progress</span>
+                                <span class="text-muted small">No Delay</span>
                                 {% endif %}
                             </td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="6" class="text-center py-4">No problem records found.</td></tr>
+                        <tr><td colspan="6" class="text-center py-5 text-muted">No problem records found.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
+
     </div>
 </div>
 {% endblock %}

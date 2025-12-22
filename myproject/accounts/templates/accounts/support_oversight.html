@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}Support Oversight Dashboard{% endblock %}
+
+{% block content %}
+<style>
+    .oversight-container { padding: 1.5rem 2rem; background: #f8fafc; font-family: 'Outfit', sans-serif; }
+    .module-card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 2rem; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+    .module-header { background: #1e293b; color: white; padding: 1rem 1.5rem; border-bottom: 3px solid #3b82f6; }
+    .section-label { padding: 0.8rem 1.5rem; background: #f8fafc; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; color: #64748b; border-bottom: 1px solid #e2e8f0; }
+    .table thead th { font-size: 0.7rem; text-transform: uppercase; color: #94a3b8; padding: 1rem 1.5rem; }
+    .table tbody td { padding: 1rem 1.5rem; font-size: 0.85rem; vertical-align: middle; }
+</style>
+
+<div class="oversight-container">
+    <div class="module-card">
+        <div class="module-header d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0"><i class="fa-solid fa-microchip me-2"></i> ITSM Module Oversight</h2>
+            <span class="badge bg-primary px-3 py-2">SYSTEM ADMINISTRATOR</span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="module-card">
+                <div class="section-label text-danger">Active SLA Breaches</div>
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead><tr><th>Ticket</th><th>Due Date</th><th>Status</th></tr></thead>
+                        <tbody>
+                            {% for sla in sla_breaches %}
+                            <tr>
+                                <td><strong>#{{ sla.incident.incident_number }}</strong></td>
+                                <td class="text-muted">{{ sla.resolution_due|date:"M d, Y" }}</td>
+                                <td><span class="badge bg-danger">{{ sla.sla_status }}</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center py-4 text-muted small">No SLA breaches detected.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="module-card">
+                <div class="section-label text-warning">Problem Management Queue</div>
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead><tr><th>Problem ID</th><th>Created</th><th>Status</th></tr></thead>
+                        <tbody>
+                            {% for prob in active_problems %}
+                            <tr>
+                                <td><strong>PRB-{{ prob.id|stringformat:"04d" }}</strong></td>
+                                <td>{{ prob.created_on }}</td>
+                                <td><span class="badge bg-warning text-dark">{{ prob.status|upper }}</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center py-4 text-muted small">No active problem cases.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="module-card">
+                <div class="section-label text-primary">Pending Change Approvals</div>
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead><tr><th>Title</th><th>Risk</th><th>Action</th></tr></thead>
+                        <tbody>
+                            {% for change in pending_changes %}
+                            <tr>
+                                <td>{{ change.title|truncatechars:25 }}</td>
+                                <td><span class="badge bg-info text-dark">{{ change.risk_level }}</span></td>
+                                <td><a href="#" class="btn btn-sm btn-outline-primary">Approve</a></td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center py-4 text-muted small">No pending change requests.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="module-card">
+                <div class="section-label text-info">Asset Warranty Alerts</div>
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead><tr><th>Asset Name</th><th>Serial</th><th>Expiry</th></tr></thead>
+                        <tbody>
+                            {% for asset in critical_assets %}
+                            <tr>
+                                <td><strong>{{ asset.name }}</strong></td>
+                                <td class="text-muted">{{ asset.serial_number }}</td>
+                                <td class="text-danger fw-bold">{{ asset.warranty_expiry }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center py-4 text-muted small">All assets are compliant.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
