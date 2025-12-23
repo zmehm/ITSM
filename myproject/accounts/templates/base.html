@@ -1,15 +1,17 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ITSM Portal - {% block title %}{% endblock %}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap');
+
         :root {
             --sidebar-width: 260px;
             --sidebar-collapsed-width: 75px;
@@ -20,33 +22,121 @@
             --content-bg: #f8fafc;
             --topbar-height: 50px;
         }
-        html, body { height: 100%; margin: 0; font-family: 'Outfit', sans-serif; background-color: var(--content-bg) !important; }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--content-bg) !important;
+        }
+
         .layout { display: flex; min-height: 100vh; }
-        .content { flex: 1; padding: 0; background-color: var(--content-bg) !important; margin-left: var(--sidebar-width); transition: margin-left 0.3s ease; }
+
+        .content {
+            flex: 1;
+            padding: 0;
+            background-color: var(--content-bg) !important;
+            margin-left: var(--sidebar-width);
+            transition: margin-left 0.3s ease;
+        }
+
         .content.sidebar-collapsed { margin-left: var(--sidebar-collapsed-width); }
-        .sidebar { width: var(--sidebar-width); background: linear-gradient(180deg, var(--sidebar-bg), var(--sidebar-bg-dark)); color: var(--sidebar-text); padding: 1.5rem 0; position: fixed; top: var(--topbar-height); bottom: 0; left: 0; z-index: 90; transition: width 0.3s ease; overflow-x: hidden; }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--sidebar-bg), var(--sidebar-bg-dark));
+            color: var(--sidebar-text);
+            padding: 1.5rem 0;
+            position: fixed;
+            top: var(--topbar-height);
+            bottom: 0;
+            left: 0;
+            z-index: 90;
+            transition: width 0.3s ease;
+            overflow-x: hidden;
+        }
+
         .sidebar.collapsed { width: var(--sidebar-collapsed-width); }
-        .sidebar-toggle { width: 44px; height: 44px; background: transparent; border: 1px solid rgba(229, 236, 255, 0.2); color: var(--sidebar-text); cursor: pointer; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 5px; margin: 0 0 1.5rem 1.25rem; }
+
+        .sidebar-toggle {
+            width: 44px; height: 44px;
+            background: transparent;
+            border: 1px solid rgba(229, 236, 255, 0.2);
+            color: var(--sidebar-text);
+            cursor: pointer;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column; gap: 5px;
+            margin: 0 0 1.5rem 1.25rem;
+        }
+
         .sidebar.collapsed .sidebar-toggle { margin: 0 auto 1.5rem; }
+
         .sidebar-toggle span { width: 22px; height: 2px; background-color: var(--sidebar-text); display: block; }
+
         .sidebar-content { padding: 0 1.25rem; transition: padding 0.3s ease; }
         .sidebar.collapsed .sidebar-content { padding: 0 0.5rem; }
-        .nav-section-title { font-size: 0.7rem; text-transform: uppercase; color: var(--sidebar-text-muted); margin-top: 1.5rem; margin-bottom: 0.5rem; letter-spacing: 1px; font-weight: 700; white-space: nowrap; }
+
+        .nav-section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--sidebar-text-muted);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
         .sidebar.collapsed .nav-section-title { opacity: 0; visibility: hidden; height: 0; margin: 0; }
-        .sidebar .list-group-item { background-color: transparent; border: none; color: var(--sidebar-text); padding: 0.65rem 0.8rem; border-radius: 0.8rem; margin-bottom: 0.25rem; text-decoration: none; font-size: 0.92rem; display: flex; align-items: center; transition: 0.2s; overflow: hidden; white-space: nowrap; }
+
+        .sidebar .list-group-item {
+            background-color: transparent; border: none;
+            color: var(--sidebar-text);
+            padding: 0.65rem 0.8rem;
+            border-radius: 0.8rem;
+            margin-bottom: 0.25rem;
+            text-decoration: none;
+            font-size: 0.92rem;
+            display: flex; align-items: center;
+            transition: 0.2s;
+            overflow: hidden; white-space: nowrap;
+        }
+
         .sidebar.collapsed .list-group-item { justify-content: center; padding: 0.65rem 0; }
-        .sidebar .list-group-item:hover { background-color: rgba(255,255,255,0.1); color: white; }
-        .sidebar .list-group-item.active { background: linear-gradient(135deg, #2563eb, #4f46e5); color: white; font-weight: 600; }
+
+        .sidebar .list-group-item:hover { background-color: rgba(255, 255, 255, 0.1); color: white; }
+
+        .sidebar .list-group-item.active {
+            background: linear-gradient(135deg, #2563eb, #4f46e5);
+            color: white; font-weight: 600;
+        }
+
         .sidebar .list-group-item i { font-size: 1.2rem; min-width: 26px; text-align: center; }
+
         .sidebar .item-text { transition: opacity 0.3s ease; margin-left: 1.1rem; }
         .sidebar.collapsed .item-text { display: none; }
-        .app-topbar { height: var(--topbar-height); background-color: var(--sidebar-bg); border-bottom: 1px solid #10151c; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; position: fixed; top: 0; width: 100%; z-index: 100; }
-        .app-topbar .navbar-brand { color: white !important; font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; }
+
+        .app-topbar {
+            height: var(--topbar-height);
+            background-color: var(--sidebar-bg);
+            border-bottom: 1px solid #10151c;
+            padding: 0 2rem;
+            display: flex; align-items: center; justify-content: space-between;
+            position: fixed; top: 0; width: 100%; z-index: 100;
+        }
+
+        .app-topbar .navbar-brand {
+            color: white !important; font-weight: 700; font-size: 1.1rem;
+            display: flex; align-items: center;
+        }
+
         .content-body { padding-top: var(--topbar-height); }
     </style>
 </head>
+
 <body>
-    <div class="layout"> 
+    <div class="layout">
         <div class="app-topbar">
             <a class="navbar-brand" href="{% url 'home' %}">
                 <div class="me-2" style="width: 26px; height: 26px; border-radius: 6px; background: #db2777; display: flex; align-items: center; justify-content: center;">
@@ -58,64 +148,82 @@
                 <a href="{% url 'logout_view' %}" class="btn btn-danger btn-sm px-3 shadow-sm">Logout</a>
             </div>
         </div>
-        
+
         {% if user.is_authenticated %}
-            <aside class="sidebar" id="sidebar">
-                <button class="sidebar-toggle" onclick="toggleSidebar()">
-                    <span></span><span></span><span></span>
-                </button>
+        <aside class="sidebar" id="sidebar">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <span></span><span></span><span></span>
+            </button>
 
-                <div class="sidebar-content">
-                    <div class="nav-section-title">Navigation</div>
-                    <div class="list-group list-group-flush">
-                        <a href="{% url 'home' %}" class="list-group-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
-                            <i class="fa-solid fa-house"></i> <span class="item-text">Dashboard</span>
-                        </a>
-                    </div>
-
-                    {# --- USER GENERAL SECTION --- #}
-                    {% if request.user.role == 'USER' %}
-                    <div class="nav-section-title">General</div>
-                    <div class="list-group list-group-flush">
-                        <a href="{% url 'create_incident' %}" class="list-group-item">
-                            <i class="fa-solid fa-triangle-exclamation"></i> <span class="item-text">Create Incident</span>
-                        </a>
-                        <a href="{% url 'incident_list' %}" class="list-group-item">
-                            <i class="fa-solid fa-list-check"></i> <span class="item-text">View My Incidents</span>
-                        </a>
-                        <a href="{% url 'service_requests' %}" class="list-group-item">
-                            <i class="fa-solid fa-file-circle-plus"></i> <span class="item-text">Service Requests</span>
-                        </a>
-                    </div>
-                    {% endif %}
-
-                    {# --- SUPPORT MODULES --- #}
-                    {% if request.user.role == 'IT_SUPPORT' %}
-                    <div class="nav-section-title">ITSM Modules</div>
-                    <div class="list-group list-group-flush">
-                        <a href="{% url 'problem_management' %}" class="list-group-item"><i class="fa-solid fa-bug"></i> <span class="item-text">Problem Management</span></a>
-                        <a href="{% url 'change_management' %}" class="list-group-item"><i class="fa-solid fa-arrows-rotate"></i> <span class="item-text">Change Management</span></a>
-                        <a href="{% url 'sla_management' %}" class="list-group-item"><i class="fa-solid fa-clock-rotate-left"></i> <span class="item-text">SLA Monitor</span></a>
-                        <a href="{% url 'asset_management' %}" class="list-group-item"><i class="fa-solid fa-laptop-medical"></i> <span class="item-text">Asset Inventory</span></a>
-                    </div>
-                    {% endif %}
-
-                    {# --- ADMIN ADMINISTRATION --- #}
-                    {% if request.user.role == 'ADMIN' %}
-                    <div class="nav-section-title">Administration</div>
-                    <div class="list-group list-group-flush">
-                        <a href="{% url 'support_oversight' %}" class="list-group-item"><i class="fa-solid fa-microchip"></i> <span class="item-text">Support Oversight</span></a>
-                        <a href="{% url 'incident_tracker' %}" class="list-group-item"><i class="fa-solid fa-gauge-high"></i> <span class="item-text">Incident Tracker</span></a>
-                        <a href="{% url 'vendor_management' %}" class="list-group-item"><i class="fa-solid fa-file-contract"></i> <span class="item-text">Vendor Management</span></a>
-                        <a href="{% url 'security_center' %}" class="list-group-item"><i class="fa-solid fa-shield-virus"></i> <span class="item-text">Security Center</span></a>
-                        <a href="{% url 'backup_management' %}" class="list-group-item"><i class="fa-solid fa-database"></i> <span class="item-text">Backup Management</span></a>
-                        <a href="{% url 'audit_trail' %}" class="list-group-item">
-                            <i class="fa-solid fa-fingerprint"></i> <span class="item-text">Audit Trail</span>
-                        </a>
-                    </div>
-                    {% endif %}
+            <div class="sidebar-content">
+                {# --- ACCOUNT SECTION (FOR ALL USERS) --- #}
+                <div class="nav-section-title">Account</div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'profile_view' %}" class="list-group-item {% if request.resolver_match.url_name == 'profile_view' %}active{% endif %}">
+                        <i class="fa-solid fa-user-gear"></i> <span class="item-text">My Profile</span>
+                    </a>
                 </div>
-            </aside>
+
+                <div class="nav-section-title">Navigation</div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'home' %}" class="list-group-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                        <i class="fa-solid fa-house"></i> <span class="item-text">Dashboard</span>
+                    </a>
+                </div>
+
+                {# --- USER GENERAL SECTION --- #}
+                {% if request.user.role == 'USER' %}
+                <div class="nav-section-title">General</div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'create_incident' %}" class="list-group-item">
+                        <i class="fa-solid fa-triangle-exclamation"></i> <span class="item-text">Create Incident</span>
+                    </a>
+                    <a href="{% url 'incident_list' %}" class="list-group-item">
+                        <i class="fa-solid fa-list-check"></i> <span class="item-text">View My Incidents</span>
+                    </a>
+                    <a href="{% url 'service_requests' %}" class="list-group-item">
+                        <i class="fa-solid fa-file-circle-plus"></i> <span class="item-text">Service Requests</span>
+                    </a>
+                    <a href="{% url 'incident_tracking' %}" class="list-group-item {% if request.resolver_match.url_name == 'incident_tracking' %}active{% endif %}">
+                        <i class="fa-solid fa-chart-line"></i> <span class="item-text">Incident Tracking</span>
+                    </a>
+                </div>
+                {% endif %}
+
+                {# --- SUPPORT MODULES --- #}
+                {% if request.user.role == 'IT_SUPPORT' %}
+                <div class="nav-section-title">ITSM Modules</div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'problem_management' %}" class="list-group-item"><i class="fa-solid fa-bug"></i>
+                        <span class="item-text">Problem Management</span></a>
+                    <a href="{% url 'change_management' %}" class="list-group-item"><i class="fa-solid fa-arrows-rotate"></i> <span class="item-text">Change Management</span></a>
+                    <a href="{% url 'sla_management' %}" class="list-group-item"><i class="fa-solid fa-clock-rotate-left"></i> <span class="item-text">SLA Monitor</span></a>
+                    <a href="{% url 'asset_management' %}" class="list-group-item"><i class="fa-solid fa-laptop-medical"></i> <span class="item-text">Asset Inventory</span></a>
+                </div>
+                {% endif %}
+
+                {# --- ADMIN ADMINISTRATION --- #}
+                {% if request.user.role == 'ADMIN' %}
+                <div class="nav-section-title">Administration</div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'support_oversight' %}" class="list-group-item"><i class="fa-solid fa-microchip"></i> <span class="item-text">Support Oversight</span></a>
+                    
+                    {# --- LOGIN MONITOR LINK FOR ADMINS --- #}
+                    <a href="{% url 'login_monitor' %}" class="list-group-item {% if request.resolver_match.url_name == 'login_monitor' %}active{% endif %}">
+                        <i class="fa-solid fa-user-clock"></i> <span class="item-text">Login Monitor</span>
+                    </a>
+
+                    <a href="{% url 'incident_tracker' %}" class="list-group-item"><i class="fa-solid fa-gauge-high"></i> <span class="item-text">Incident Tracker</span></a>
+                    <a href="{% url 'vendor_management' %}" class="list-group-item"><i class="fa-solid fa-file-contract"></i> <span class="item-text">Vendor Management</span></a>
+                    <a href="{% url 'security_center' %}" class="list-group-item"><i class="fa-solid fa-shield-virus"></i> <span class="item-text">Security Center</span></a>
+                    <a href="{% url 'backup_management' %}" class="list-group-item"><i class="fa-solid fa-database"></i> <span class="item-text">Backup Management</span></a>
+                    <a href="{% url 'audit_trail' %}" class="list-group-item">
+                        <i class="fa-solid fa-fingerprint"></i> <span class="item-text">Audit Trail</span>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </aside>
         {% endif %}
 
         <main class="content" id="mainContent">

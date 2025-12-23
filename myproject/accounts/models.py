@@ -76,6 +76,15 @@ class CustomUser(AbstractUser):
 
 # --- 3. ITSM Master Data ---
 
+class RootCauseCat(models.Model):
+    name = models.CharField(max_length=100)
+    active = models.BooleanField(default=True)
+    def __str__(self): return self.name
+
+class RcSubcat(models.Model):
+    rc_catID = models.ForeignKey(RootCauseCat, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+    active = models.BooleanField(default=True)
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
     active = models.BooleanField(default=True)
@@ -87,6 +96,7 @@ class Category(models.Model):
 class SubCategory(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
+    rc_cat = models.ForeignKey(RootCauseCat, on_delete=models.SET_NULL, null=True, blank=True)
     active = models.BooleanField(default=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='subcategories_created')
     created_on = models.DateField(auto_now_add=True)
@@ -204,17 +214,6 @@ class Asset(models.Model):
     software_version = models.IntegerField(default=1)
     last_audit_date = models.DateField()
 
-# --- 6. Problem Management ---
-
-class RootCauseCat(models.Model):
-    name = models.CharField(max_length=100)
-    active = models.BooleanField(default=True)
-    def __str__(self): return self.name
-
-class RcSubcat(models.Model):
-    rc_catID = models.ForeignKey(RootCauseCat, on_delete=models.CASCADE)
-    name = models.CharField(max_length=100)
-    active = models.BooleanField(default=True)
 
 class ProblemManagement(models.Model):
     description = models.TextField()

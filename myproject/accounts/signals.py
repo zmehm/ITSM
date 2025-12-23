@@ -3,7 +3,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from datetime import timedelta
-from .models import LoginMonitor, Incident, SLAManagement,Vendor, SecurityManagement, BackupManagement, AuditManagement
+from .models import LoginMonitor, Incident, SLAManagement,Vendor, SecurityManagement, BackupManagement, AuditManagement,ProblemManagement, ProblemCase
 from django.db.models.signals import pre_save
 
 # --- UTILITY: GET CLIENT IP ADDRESS ---
@@ -95,3 +95,77 @@ def track_admin_changes(sender, instance, **kwargs):
                 )
         except sender.DoesNotExist:
             pass
+
+
+
+@receiver(post_save, sender=Incident)
+def evaluate_problem_policy(sender, instance, created, **kwargs):
+    # Only run logic for new incidents with a mapped Root Cause
+    if created and instance.subcatID and instance.subcatID.rc_cat:
+        user = instance.empID
+        sub_name = instance.subcatID.name
+        rc_cat_obj = instance.subcatID.rc_cat
+
+        # --- A. DEFINE METRIC PERIODS (Based on your table) ---
+        if any(x in sub_name for x in ["Battery", "Crash", "Connectivity"]):
+            days = 7
+        elif any(x in sub_name for x in ["Profile", "Vendor"]):
+            days = 90
+        else:
+            days = 30 # Standard for Hardware, Config, Resources, Lockouts
+            
+        start_date = timezone.now().date() - timedelta(days=days)
+
+        # --- B. COUNT HISTORICAL INCIDENTS FOR THIS USER ---
+        incident_count = Incident.objects.filter(
+            empID=user,
+            subcatID=instance.subcatID,
+            created_on__gte=start_date
+        ).count()
+
+        # --- C. DEFINE THRESHOLD LOGIC (Your Table Policy) ---
+        severity = None
+        
+        # 1. Hardware/Battery/Connectivity/Resource/Lockout (≥10 is Major)
+        if any(x in sub_name for x in ["Hardware", "Battery", "Connectivity Drop", "Resource", "Account Lockout"]):
+            if incident_count >= 10: severity = 'Major Issue'
+            elif 6 <= incident_count <= 9: severity = 'Moderate Issue'
+            elif 3 <= incident_count <= 5: severity = 'Minor Issue'
+
+        # 2. Component Failure/Performance/Connectivity Fix (≥12 is Major)
+        elif any(x in sub_name for x in ["Component", "Application Crash", "Connectivity Fix", "Performance"]):
+            if incident_count >= 12: severity = 'Major Issue'
+            elif 8 <= incident_count <= 11: severity = 'Moderate Issue'
+            elif 4 <= incident_count <= 7: severity = 'Minor Issue' # Note: 5-7 for Crash/Fix
+
+        # 3. Profile Corruption / Config Change (≥5 is Major)
+        elif any(x in sub_name for x in ["Profile", "Configuration"]):
+            if incident_count >= 5: severity = 'Major Issue'
+            elif 3 <= incident_count <= 4: severity = 'Moderate Issue'
+            elif incident_count == 2: severity = 'Minor Issue'
+
+        # 4. Vendor Glitch (≥6 is Major)
+        elif "Vendor" in sub_name:
+            if incident_count >= 6: severity = 'Major Issue'
+            elif 4 <= incident_count <= 5: severity = 'Moderate Issue'
+            elif 2 <= incident_count <= 3: severity = 'Minor Issue'
+
+        # --- D. TAKE ACTION ---
+        if severity:
+            # Create the Problem Record
+            ProblemManagement.objects.get_or_create(
+                description=f"{severity}: {sub_name} threshold reached (Count: {incident_count})",
+                root_cause_catID=rc_cat_obj,
+                defaults={
+                    'status': 'open',
+                    'known_issue': True,
+                    'created_by': instance.created_by
+                }
+            )
+
+            # Update the ProblemCase Tracking table
+            ProblemCase.objects.filter(rc_catID=rc_cat_obj).update(
+                freq_count=incident_count,
+                active=True,
+                detected_on=timezone.now().date()
+            )

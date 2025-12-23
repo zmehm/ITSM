@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<style>
+    .profile-container {
+        padding: 2rem;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    .profile-card {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+    .profile-header {
+        background: #1e293b;
+        padding: 1.5rem;
+        border-bottom: 4px solid #db2777; /* Pink accent from your logo */
+        color: white;
+    }
+    .form-label {
+        font-weight: 700;
+        color: #475569;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+    .form-control:focus {
+        border-color: #db2777;
+        box-shadow: 0 0 0 0.25rem rgba(219, 39, 119, 0.1);
+    }
+    .save-btn {
+        background: linear-gradient(135deg, #2563eb, #4f46e5);
+        border: none;
+        font-weight: 700;
+        padding: 0.8rem 2rem;
+        border-radius: 8px;
+    }
+</style>
+
+<div class="profile-container">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success alert-dismissible fade show mb-4 shadow-sm" role="alert">
+                <i class="fa-solid fa-circle-check me-2"></i> {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="profile-card">
+        <div class="profile-header d-flex align-items-center">
+            <div class="me-3" style="width: 50px; height: 50px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-user-gear fa-lg"></i>
+            </div>
+            <div>
+                <h4 class="mb-0">Account Settings</h4>
+                <small class="text-white-50">Manage your personal information and registration details</small>
+            </div>
+        </div>
+
+        <div class="p-4">
+            <form method="POST">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">First Name</label>
+                        {{ form.first_name }}
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">Last Name</label>
+                        {{ form.last_name }}
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Email Address</label>
+                    {{ form.email }}
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Phone Number</label>
+                    {{ form.phone_number }}
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Role</label>
+                    <input type="text" class="form-control bg-light" value="{{ request.user.role }}" readonly disabled>
+                    <small class="text-muted">Roles are assigned by administrators and cannot be changed here.</small>
+                </div>
+
+                <hr class="my-4 text-muted">
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary save-btn">
+                        <i class="fa-solid fa-floppy-disk me-2"></i> Save Profile Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

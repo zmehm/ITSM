@@ -1,6 +1,60 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script> 
+
+<script>
+$(document).ready(function() {
+    console.log("ITSM Script: Initializing Event Listeners...");
+
+    // Target the IDs verified in your Inspect window
+    var categorySelect = $('#id_catID'); 
+    var subcategorySelect = $('#id_subcatID');
+
+    // Use a delegation-style listener for maximum reliability
+    $(document).on('change', '#id_catID', function() {
+        var categoryId = $(this).val();
+        console.log("User selected Category ID:", categoryId);
+
+        // Show loading state immediately
+        subcategorySelect.html('<option value="">Loading...</option>').prop('disabled', true);
+        
+        if (categoryId) {
+            // URL matches your urls.py prefix
+            var ajaxUrl = '/api/subcategories/' + categoryId + '/';
+
+            $.ajax({
+                url: ajaxUrl,
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    console.log("Success! Server returned:", data);
+                    
+                    // Reset and enable subcategory dropdown
+                    subcategorySelect.html('<option value="">Select a Subcategory</option>').prop('disabled', false);
+                    
+                    if (data.length > 0) {
+                        $.each(data, function(index, item) {
+                            subcategorySelect.append(
+                                $('<option></option>').val(item.id).text(item.name)
+                            );
+                        });
+                    } else {
+                        subcategorySelect.html('<option value="">No subcategories available</option>');
+                    }
+                },
+                error: function(xhr) {
+                    console.error("AJAX Error! Status:", xhr.status);
+                    subcategorySelect.html('<option value="">Error loading</option>').prop('disabled', false);
+                }
+            });
+        } else {
+            subcategorySelect.html('<option value="">---------</option>').prop('disabled', true);
+        }
+    });
+});
+</script>
+
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
 
@@ -12,7 +66,7 @@
     }
 
     .incident-container {
-        max-width: 650px; /* Compact rectangle */
+        max-width: 650px; 
         margin: 0 auto;
         padding: 0 1rem;
     }
@@ -25,7 +79,7 @@
     }
 
     .incident-header {
-        background: #1e293b; /* Header style matching */
+        background: #1e293b;
         padding: 1rem;
         text-align: center;
         border-bottom: 3px solid #38bdf8;
@@ -117,11 +171,9 @@
             <div class="incident-body">
                 {% if messages %}
                     {% for message in messages %}
-                        {% if "logged out" not in message.message %}
-                            <div class="alert alert-{{ message.tags }} p-2 small mb-3">
-                                {{ message }}
-                            </div>
-                        {% endif %}
+                        <div class="alert alert-{{ message.tags }} p-2 small mb-3">
+                            {{ message }}
+                        </div>
                     {% endfor %}
                 {% endif %}
 
@@ -141,12 +193,14 @@
                         <div class="col-6">
                             <div class="form-group">
                                 <label class="form-label">Category</label>
-                                {{ form.catID }} </div>
+                                {{ form.catID }} 
+                            </div>
                         </div>
                         <div class="col-6">
                             <div class="form-group">
                                 <label class="form-label">Subcategory</label>
-                                {{ form.subcatID }} </div>
+                                {{ form.subcatID }} 
+                            </div>
                         </div>
                     </div>
 
@@ -183,41 +237,3 @@
     </div>
 </div>
 {% endblock %}
-
-{% block extra_js %}
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script> 
-<script>
-$(document).ready(function() {
-    // Correct selectors for AJAX functionality
-    var categorySelect = $('#id_catID'); 
-    var subcategorySelect = $('#id_subcatID');
-
-    categorySelect.change(function() {
-        var categoryId = $(this).val();
-        
-        // Show loading state in subcategory
-        subcategorySelect.html('<option value="">Loading...</option>').prop('disabled', true);
-        
-        if (categoryId) {
-            $.ajax({
-                url: '/api/subcategories/' + categoryId + '/', 
-                type: 'GET',
-                dataType: 'json',
-                success: function(data) {
-                    // Populate with results
-                    subcategorySelect.html('<option value="">Select a Subcategory</option>').prop('disabled', false);
-                    $.each(data, function(id, name) {
-                        subcategorySelect.append($('<option></option>').attr('value', id).text(name));
-                    });
-                },
-                error: function() {
-                    subcategorySelect.html('<option value="">Error loading</option>').prop('disabled', false);
-                }
-            });
-        } else {
-            subcategorySelect.html('<option value="">---------</option>').prop('disabled', true);
-        }
-    });
-});
-</script>
-{% endblock extra_js %}

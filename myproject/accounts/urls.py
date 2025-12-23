@@ -45,4 +45,8 @@ urlpatterns = [
     path('tracker/incidents/', views.incident_tracker, name='incident_tracker'),
     path('tracker/technicians/', views.tech_tracking, name='tech_tracking'),
     path('oversight/support/', views.support_oversight, name='support_oversight'), # Renamed slightly to avoid conflict
+    path('incident/tracking/', views.incident_tracking_view, name='incident_tracking'),
+    path('login-monitor/', views.login_monitor_dashboard, name='login_monitor'),
+    path('login-monitor/', views.login_monitor_dashboard, name='login_monitor'),
+    path('profile/', views.profile_view, name='profile_view'),
 ]

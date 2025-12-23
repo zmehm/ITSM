@@ -14,7 +14,6 @@
         padding: 1.5rem 2rem;
     }
 
-    /* --- COMPACT THEMED HEADER --- */
     .problem-hero {
         background: #ffffff;
         border-radius: 12px;
@@ -24,9 +23,9 @@
     }
 
     .problem-header-bar {
-        background: #1e293b; /* Matches New Incident theme */
+        background: #1e293b; 
         padding: 0.75rem 1.5rem;
-        border-bottom: 3px solid #10b981; /* Green accent for Problem Management */
+        border-bottom: 3px solid #10b981; 
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -39,14 +38,6 @@
         margin: 0;
     }
 
-    .btn-group-custom .btn {
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.85rem;
-        padding: 0.5rem 1rem;
-    }
-
-    /* --- TABLE CARD STYLING --- */
     .data-card {
         background: #ffffff;
         border-radius: 12px;
@@ -61,157 +52,112 @@
         border-bottom: 1px solid #edf2f7;
     }
 
-    .card-label h5 {
-        font-size: 1rem;
-        font-weight: 700;
-        margin: 0;
-    }
-
-    /* --- TABLE THEME --- */
     .table thead th {
         background: #f8fafc;
         color: #475569;
         font-weight: 700;
         text-transform: uppercase;
         font-size: 0.75rem;
-        letter-spacing: 0.5px;
         padding: 1rem;
         border: none;
     }
 
-    .table tbody td {
-        padding: 1.1rem 1rem;
-        vertical-align: middle;
-        font-size: 0.9rem;
-        border-bottom: 1px solid #f1f5f9;
-    }
-
-    /* --- STATUS BADGES --- */
     .status-pill {
         padding: 4px 12px;
         border-radius: 20px;
         font-weight: 700;
         font-size: 0.75rem;
         text-transform: uppercase;
+        display: inline-block;
+        min-width: 60px;
+        text-align: center;
     }
 
-    .status-active { background: #dcfce7; color: #166534; }
-    .status-investigation { background: #e0f2fe; color: #075985; }
-    .status-kedb { background: #fef3c7; color: #92400e; }
-    .status-danger { background: #fee2e2; color: #991b1b; }
+    .status-active { background: #dcfce7; color: #166534; } /* Green for YES */
+    .status-danger { background: #fee2e2; color: #991b1b; } /* Red for NO/OPEN */
+    
+    .freq-badge {
+        background: #3b82f6;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-weight: 800;
+        font-size: 0.85rem;
+    }
 </style>
 
 <div class="problem-page">
     <div class="container-fluid">
 
-        {# --- 1. THEMED HEADER --- #}
         <div class="problem-hero">
             <div class="problem-header-bar">
                 <h2 class="problem-title">
                     <i class="fa-solid fa-microscope me-2"></i> Problem Management
                 </h2>
-                <div class="btn-group-custom">
-                    <button class="btn btn-outline-light btn-sm me-2"><i class="fa-solid fa-download me-1"></i> Export</button>
-                    <button class="btn btn-success btn-sm"><i class="fa-solid fa-plus me-1"></i> Log New Problem</button>
-                </div>
             </div>
             <div class="p-3 bg-white">
+                <small class="text-muted">Consolidated View of Recurring Root Causes.</small>
             </div>
         </div>
 
-        {# --- 2. RECURRING PATTERNS CARD --- #}
-        <div class="data-card">
-            <div class="card-label">
-                <h5 class="text-success"><i class="fa-solid fa-chart-line me-2"></i> Recurring Incident Patterns (Problem Cases)</h5>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th>Case Name</th>
-                            <th>Root Cause Category</th>
-                            <th>Frequency</th>
-                            <th>Status</th>
-                            <th>First Detected</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for case in problem_cases %}
-                        <tr>
-                            <td><strong>{{ case.name }}</strong></td>
-                            <td>{{ case.rc_catID.name }}</td>
-                            <td>
-                                <span class="badge {% if case.freq_count > 5 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
-                                    {{ case.freq_count }} Occurrences
-                                </span>
-                            </td>
-                            <td>
-                                {% if case.active %}
-                                <span class="status-pill status-active"><i class="fa-solid fa-circle-check me-1"></i> Active</span>
-                                {% else %}
-                                <span class="text-muted small">Inactive</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-secondary small">{{ case.detected_on|date:"M d, Y"|default:"---" }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="5" class="text-center py-5 text-muted">No recurring cases identified yet.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        {# --- 3. PROBLEM RECORDS CARD --- #}
         <div class="data-card">
             <div class="card-label">
                 <h5 class="text-primary"><i class="fa-solid fa-database me-2"></i> Problem Records & Root Cause Analysis</h5>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
-                    <thead class="table-dark"> <tr>
+                    <thead>
+                        <tr>
                             <th>ID</th>
                             <th>Description</th>
                             <th>Category</th>
-                            <th>KEDB Entry</th>
+                            <th class="text-center">Freq</th>
+                            <th class="text-center">KEDB</th>
                             <th>Status</th>
-                            <th>Restoration Delay</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for problem in problems %}
                         <tr>
                             <td class="fw-bold" style="color: #3b82f6;">#{{ problem.id }}</td>
-                            <td class="text-secondary">{{ problem.description|truncatewords:8 }}</td>
+                            
+                            {# Displaying full description including the count #}
+                            <td class="text-secondary">{{ problem.description }}</td>
+                            
                             <td>{{ problem.root_cause_catID.name }}</td>
-                            <td>
-                                {% if problem.known_issue %}
-                                <span class="status-pill status-kedb">KEDB Entry</span>
-                                {% else %}
-                                <span class="text-muted small">Under Review</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <span class="status-pill {% if problem.status == 'open' %}status-danger{% elif problem.status == 'in_progress' %}status-investigation{% else %}status-active{% endif %}">
-                                    {{ problem.status|upper }}
+                            
+                            <td class="text-center">
+                                <span class="freq-badge">
+                                    {# Logic to extract number from string (Count: X) without custom filters #}
+                                    {% if "(Count: " in problem.description %}
+                                        {# This slices the string to find the number before the closing bracket #}
+                                        {{ problem.description|slice:"-3:-1"|cut:" " }}
+                                    {% else %}
+                                        1
+                                    {% endif %}
                                 </span>
                             </td>
-                            <td>
-                                {% if problem.delays %}
-                                <span class="fw-bold text-danger">{{ problem.delays }} Days</span>
+
+                            <td class="text-center">
+                                {# Fixed: Shows NO in red for automated hits #}
+                                {% if problem.known_issue %}
+                                    <span class="status-pill status-active">YES</span>
                                 {% else %}
-                                <span class="text-muted small">No Delay</span>
+                                    <span class="status-pill status-danger">NO</span>
                                 {% endif %}
+                            </td>
+
+                            <td>
+                                <span class="status-pill status-danger">{{ problem.status|upper }}</span>
                             </td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="6" class="text-center py-5 text-muted">No problem records found.</td></tr>
+                        <tr><td colspan="6" class="text-center py-5 text-muted">No records found.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
-
     </div>
 </div>
 {% endblock %}

@@ -10,6 +10,7 @@ from django.views.decorators.cache import never_cache
 from django.utils import timezone
 from django.db.models import Q 
 from datetime import timedelta
+from django.core.mail import send_mail
 
 # --- Email and Template Imports ---
 from django.template.loader import render_to_string 
@@ -18,12 +19,13 @@ from django.core.mail import EmailMessage
 # --- Local Imports ---
 from .forms import (
     EmployeeRegistrationForm, ProfileCompletionForm, 
-    IncidentForm, FeedbackForm, ServiceRequestForm
+    IncidentForm, FeedbackForm, ServiceRequestForm,UserProfileForm
 )
 from .models import (
     Category, SubCategory, Incident, TicketFeedback, 
     IncidentTracking, ServiceRequest, SLAManagement, Asset,
-    ProblemManagement, ProblemCase, RootCauseCat, RcSubcat,Vendor, SecurityManagement, BackupManagement, AuditManagement
+    ProblemManagement, ProblemCase, RootCauseCat, RcSubcat, Vendor, 
+    SecurityManagement, BackupManagement, AuditManagement,LoginMonitor
 )
 
 User = get_user_model() 
@@ -52,10 +54,11 @@ def is_support(user):
     return user.is_authenticated and user.role == 'IT_SUPPORT'
 
 def get_subcategories(request, category_id):
-    subcategories = SubCategory.objects.filter(category_id=category_id, active=True).values('id', 'name')
-    data = {subcat['id']: subcat['name'] for subcat in subcategories}
-    return JsonResponse(data)
-
+    subcategories = SubCategory.objects.filter(
+        category_id=category_id, 
+        active=True
+    ).values('id', 'name')
+    return JsonResponse(list(subcategories), safe=False)
 
 # =====================================================================
 # 1. AUTHENTICATION & GLOBAL VIEWS
@@ -114,9 +117,8 @@ def password_reset(request):
         form = PasswordResetForm()
     return render(request, 'accounts/password_reset.html', {'form': form})
 
-
 # =====================================================================
-# 2. ROLE-BASED LANDING PAGE (CENTRAL HOME ROUTER)
+# 2. ROLE-BASED LANDING PAGE
 # =====================================================================
 
 @login_required
@@ -139,7 +141,6 @@ def home(request):
         return redirect('support_dashboard')
     else: 
         return redirect('user_dashboard')
-
 
 # =====================================================================
 # 3. DASHBOARDS
@@ -179,40 +180,18 @@ def support_dashboard(request):
 @login_required
 @role_required('ADMIN')
 def admin_dashboard(request):
-    """
-    Administrator Power Panel: Consolidates ITSM metrics, Vendor tracking, 
-    Security monitoring, Backup schedules, and System Audits.
-    """
-    # 1. --- Core Incident Metrics ---
     total_incidents = Incident.objects.count()
     closed_count = Incident.objects.filter(status='CLOSED').count()
     resolved_count = Incident.objects.filter(status='AWAITING_FEEDBACK').count()
     
-    # 2. --- CSAT / Feedback Logic ---
     satisfied_feedback_count = TicketFeedback.objects.filter(is_satisfied=True).count()
     total_feedback_count = TicketFeedback.objects.count()
     csat_score = (satisfied_feedback_count / total_feedback_count * 100) if total_feedback_count > 0 else 0
     
-    # 3. --- NEW: Vendor Management ---
-    # Monitor contracts expiring within 30 days
     expiry_threshold = timezone.now().date() + timedelta(days=30)
-    expiring_vendors = Vendor.objects.filter(
-        contract_expiry__lte=expiry_threshold, 
-        status='Active'
-    ).order_by('contract_expiry')
-    
-    # 4. --- NEW: Security Management ---
-    # Track active threats that require admin attention
-    active_threats = SecurityManagement.objects.filter(
-        status='Detected'
-    ).select_related('affected_asset', 'assigned_admin').order_by('-severity')
-    
-    # 5. --- NEW: Backup Management ---
-    # Monitor upcoming and overdue data backup tasks
+    expiring_vendors = Vendor.objects.filter(contract_expiry__lte=expiry_threshold, status='Active').order_by('contract_expiry')
+    active_threats = SecurityManagement.objects.filter(status='Detected').select_related('affected_asset', 'assigned_admin').order_by('-severity')
     backup_status = BackupManagement.objects.all().select_related('target_asset').order_by('next_schedule')
-    
-    # 6. --- NEW: Audit Management ---
-    # Display the most recent 10 administrative actions for the log
     recent_audits = AuditManagement.objects.all().order_by('-timestamp')[:10]
     
     context = {
@@ -221,8 +200,6 @@ def admin_dashboard(request):
         'resolved_count': resolved_count,
         'csat_score': round(csat_score, 2),
         'all_incidents': Incident.objects.all().select_related('empID', 'assigned_to').order_by('-created_on')[:10],
-        
-        # Admin Module Context
         'expiring_vendors': expiring_vendors,
         'active_threats': active_threats,
         'backup_status': backup_status,
@@ -231,21 +208,83 @@ def admin_dashboard(request):
     return render(request, 'accounts/admin_dashboard.html', context)
 
 # =====================================================================
-# 4. INCIDENT WORKFLOW & TRACKING AUTOMATION
+# 4. INCIDENT WORKFLOW & AUTOMATION ENGINE
 # =====================================================================
 
+def check_threshold_and_categorize(incident):
+    user = incident.empID
+    subcat = incident.subcatID
+    
+    if not subcat or not subcat.rc_cat:
+        return
+
+    sub_name = subcat.name
+    
+    if any(x in sub_name for x in ["Battery", "Application Crash", "Connectivity", "Routers", "Switches", "Access Points", "Network Cables"]):
+        lookback = 7
+    elif any(x in sub_name for x in ["Profile", "Vendor"]):
+        lookback = 90
+    else:
+        lookback = 30
+
+    start_date = timezone.now().date() - timedelta(days=lookback)
+    incident_count = Incident.objects.filter(
+        empID=user,
+        subcatID=subcat,
+        created_on__gte=start_date
+    ).count()
+
+    severity = None
+    if any(x in sub_name for x in ["Routers", "Switches", "Access Points", "Network Cables", "Connectivity Drop", "Hardware", "Monitor", "Keyboard", "Mouse", "Laptop", "Desktop"]):
+        if incident_count >= 10: severity = "Major Issue"
+        elif 6 <= incident_count <= 9: severity = "Moderate Issue"
+        elif 3 <= incident_count <= 5: severity = "Minor Issue"
+    elif any(x in sub_name for x in ["Profile", "Configuration", "Vendor", "Encryption", "Firewalls", "Security"]):
+        if incident_count >= 5: severity = "Major Issue"
+        elif 3 <= incident_count <= 4: severity = "Moderate Issue"
+
+    if severity:
+     user_full_name = f"{user.first_name} {user.last_name}"
+    
+    problem, created = ProblemManagement.objects.get_or_create(
+        root_cause_catID=subcat.rc_cat,
+        description__icontains=user_full_name,
+        status='open',
+        defaults={
+            # We put the count at the VERY END so HTML can find it easily
+            'description': f"{severity} - {user_full_name} | {incident_count}",
+            'known_issue': False  # This fixes the KEDB "YES" issue
+        }
+    )
+
+    if not created:
+        # Update existing record with the new count
+        problem.description = f"{severity} - {user_full_name} | {incident_count}"
+        problem.save()
 @login_required
 @never_cache
 def create_incident(request):
     user = request.user
     if request.method == "POST":
         form = IncidentForm(request.POST, request.FILES)
-        if form.is_valid():
-            incident = form.save(commit=False)
-            incident.created_by = user
-            incident.empID = user 
-            incident.status = 'NEW'
+        
+        # Manually construction with restored field names
+        incident = Incident(
+            subsidiary_id=request.POST.get('subsidiary'),
+            catID_id=request.POST.get('catID'),
+            subcatID_id=request.POST.get('subcatID'),
+            description=request.POST.get('description'),
+            priority=request.POST.get('priority'),
+            impact_id=request.POST.get('catID'), # Satisfy NOT NULL constraint
+            file_upload=request.FILES.get('file_upload'), 
+            empID=user,
+            created_by=user,
+            status='NEW'
+        )
+
+        try:
             incident.save()
+            check_threshold_and_categorize(incident)
             
             IncidentTracking.objects.create(
                 incident=incident,
@@ -254,34 +293,29 @@ def create_incident(request):
                 created_by=user
             )
             
-            messages.success(request, f"Incident created! Tracking started for {incident.incident_number}")
+            messages.success(request, "Incident created successfully!")
             return redirect('user_dashboard')
+        except Exception as e:
+            messages.error(request, f"Error saving incident: {str(e)}")
+            return render(request, 'accounts/incident_management.html', {'form': form})
     else:
         form = IncidentForm()
     return render(request, 'accounts/incident_management.html', {'form': form})
 
+# =====================================================================
+# 5. RESOLUTION & FEEDBACK
+# =====================================================================
+
 @login_required
 @role_required('IT_SUPPORT')
 def resolve_incident(request, incident_id):
-    incident = get_object_or_404(Incident, id=incident_id, assigned_to=request.user)
+    incident = get_object_or_404(Incident, id=incident_id)
     if request.method == 'POST':
-        current_time = timezone.now()
-        incident.status = 'AWAITING_FEEDBACK'
-        incident.resolved_at = current_time 
-        incident.resolved_date = current_time.date() 
+        incident.status = 'RESOLVED'
+        incident.resolved_at = timezone.now()
+        incident.resolution_notes = request.POST.get('resolution_notes', 'No notes provided.')
         incident.save()
-        
-        tracking = getattr(incident, 'tracking', None)
-        if tracking:
-            tracking.status = 'AWAITING_FEEDBACK'
-            tracking.assigned_to = request.user.get_full_name() or request.user.email
-            tracking.resolved_on = current_time.date()
-            tracking.resolved_time = current_time.time()
-            tracking.save() 
-        
-        messages.success(request, f"Incident {incident.incident_number} resolved. Metrics recorded.")
         return redirect('support_dashboard')
-    return render(request, 'accounts/incident_detail_support.html', {'incident': incident})
 
 @login_required
 @role_required('USER')
@@ -297,15 +331,7 @@ def submit_feedback(request, incident_id):
                 ticket=ticket, is_satisfied=is_satisfied,
                 comments=form.cleaned_data['comments'], provided_by=request.user
             )
-            
-            tracking = getattr(ticket, 'tracking', None)
-            if tracking:
-                tracking.feedback_action = is_satisfied
-                tracking.status = 'CLOSED' if is_satisfied else 'REOPENED'
-                tracking.save()
-
             ticket.status = 'CLOSED' if is_satisfied else 'REOPENED'
-            if not is_satisfied: ticket.assigned_to = None
             ticket.save() 
             return redirect('user_dashboard') 
     else:
@@ -313,37 +339,26 @@ def submit_feedback(request, incident_id):
     return render(request, 'accounts/incident_detail_feedback.html', {'ticket': ticket, 'form': form})
 
 # =====================================================================
-# 5. SUPPORT QUEUES & MISC
+# 6. QUEUES, TRACKING & ASSETS
 # =====================================================================
 
 @login_required
 @user_passes_test(is_support)
 def unassigned_queue_view(request):
     tickets = Incident.objects.filter(assigned_to__isnull=True, status__in=['NEW', 'REOPENED']).order_by('-priority', 'created_on')
-    return render(request, 'accounts/dedicated_queue.html', {
-        'tickets': tickets, 'queue_name': 'Unassigned Triage Queue', 'queue_color': 'danger',
-        'queue_icon': 'fa-fire', 'is_support_view': True, 'ticket_count_formatted': format_ticket_count(tickets.count())
-    })
+    return render(request, 'accounts/dedicated_queue.html', {'tickets': tickets, 'queue_name': 'Unassigned Triage Queue', 'ticket_count_formatted': format_ticket_count(tickets.count())})
 
 @login_required
 @user_passes_test(is_support)
 def my_active_tickets_view(request):
     tickets = Incident.objects.filter(assigned_to=request.user).exclude(status__in=['AWAITING_FEEDBACK', 'CLOSED']).order_by('-priority', 'created_on')
-    return render(request, 'accounts/dedicated_queue.html', {
-        'tickets': tickets, 'queue_name': 'My Active Workload', 'queue_color': 'primary',
-        'queue_icon': 'fa-helmet-safety', 'is_support_view': True, 'is_my_tickets_view': True,
-        'ticket_count_formatted': format_ticket_count(tickets.count())
-    })
+    return render(request, 'accounts/dedicated_queue.html', {'tickets': tickets, 'queue_name': 'My Active Workload', 'ticket_count_formatted': format_ticket_count(tickets.count())})
 
 @login_required
 @user_passes_test(is_support)
 def feedback_queue_view(request):
     tickets = Incident.objects.filter(status='AWAITING_FEEDBACK').order_by('created_on')
-    return render(request, 'accounts/dedicated_queue.html', {
-        'tickets': tickets, 'queue_name': 'Awaiting User Feedback', 'queue_color': 'warning',
-        'queue_icon': 'fa-hourglass-half', 'is_support_view': True, 'is_feedback_queue': True,
-        'ticket_count_formatted': format_ticket_count(tickets.count())
-    })
+    return render(request, 'accounts/dedicated_queue.html', {'tickets': tickets, 'queue_name': 'Awaiting User Feedback', 'ticket_count_formatted': format_ticket_count(tickets.count())})
 
 @login_required
 @role_required('IT_SUPPORT')
@@ -353,28 +368,17 @@ def take_incident(request, incident_id):
         incident.assigned_to = request.user
         incident.status = 'IN_PROGRESS'
         incident.save()
-        
-        tracking = getattr(incident, 'tracking', None)
-        if tracking:
-            tracking.status = 'IN_PROGRESS'
-            tracking.assigned_to = request.user.get_full_name() or request.user.email
-            tracking.save()
-            
         messages.success(request, f"Incident {incident.incident_number} assigned to you.")
     return redirect('support_dashboard')
 
 @login_required
 def incident_list_view(request):
-    incidents = Incident.objects.filter(empID=request.user).order_by('-created_on', '-created_time')
+    incidents = Incident.objects.filter(empID=request.user).order_by('-created_on')
     return render(request, 'accounts/incident_list.html', {'incidents': incidents})
 
 @login_required
 def incident_detail_view(request, incident_id):
     incident = get_object_or_404(Incident, id=incident_id)
-    is_authorized = (incident.empID == request.user) or (incident.assigned_to == request.user) or (request.user.role == 'ADMIN')
-    if not is_authorized:
-        messages.error(request, "Unauthorized access.")
-        return redirect('home')
     return render(request, 'accounts/incident_detail.html', {'incident': incident})
 
 @login_required
@@ -385,112 +389,81 @@ def service_requests(request):
             req = form.save(commit=False)
             req.empID = request.user 
             req.save()
-            messages.success(request, "Service Request submitted successfully!")
             return redirect('user_dashboard')
     else:
         form = ServiceRequestForm()
     return render(request, 'accounts/service_requests.html', {'form': form})
 
-# =====================================================================
-# 6. PROBLEM, SLA & ASSET MANAGEMENT
-# =====================================================================
-
 @login_required
 @role_required('IT_SUPPORT')
 def problem_management(request):
-    """Monitor recurring problem cases and root causes"""
-    problems = ProblemManagement.objects.all().select_related('root_cause_catID', 'assigned_to').order_by('-created_on')
+    problems = ProblemManagement.objects.all().select_related('root_cause_catID').order_by('-created_on')
     problem_cases = ProblemCase.objects.all().order_by('-freq_count')
-    return render(request, 'accounts/problem_management.html', {
-        'problems': problems,
-        'problem_cases': problem_cases
-    })
+    return render(request, 'accounts/problem_management.html', {'problems': problems, 'problem_cases': problem_cases})
 
 @login_required
 @role_required('IT_SUPPORT')
 def sla_management(request):
-    """View to monitor restoration delays and SLA compliance"""
     sla_records = SLAManagement.objects.all().select_related('incident').order_by('resolution_due')
     return render(request, 'accounts/sla_management.html', {'sla_records': sla_records})
 
 @login_required
 @role_required('IT_SUPPORT')
 def asset_management(request):
-    """View to track hardware and software assets"""
     assets = Asset.objects.all().select_related('category', 'custodian').order_by('-last_audit_date')
     return render(request, 'accounts/asset_management.html', {'assets': assets})
 
+# --- Placeholder Views ---
 @login_required
-def change_management(request): 
-    return render(request, 'accounts/change_management.html')
-    
-
-
+def change_management(request): return render(request, 'accounts/change_management.html')
 @login_required
-def vendor_management(request):
-    # logic for vendor management will go here
-    return render(request, 'accounts/vendor_management.html')
-
+def vendor_management(request): return render(request, 'accounts/vendor_management.html')
 @login_required
-def security_center(request):
-    # logic for security threats will go here
-    return render(request, 'accounts/security_center.html')
-
+def security_center(request): return render(request, 'accounts/security_center.html')
 @login_required
-def backup_management(request):
-    # logic for backup compliance will go here
-    return render(request, 'accounts/backup_management.html')
-
+def backup_management(request): return render(request, 'accounts/backup_management.html')
 @login_required
-def audit_trail(request):
-    # logic for audit logs will go here
-    return render(request, 'accounts/audit_trail.html')
-
+def audit_trail(request): return render(request, 'accounts/audit_trail.html')
 
 @login_required
 def incident_tracker(request):
-    # Use 'created_on' instead of 'created_at'
-    all_tracked_incidents = Incident.objects.all().order_by('-created_on', '-created_time')
-
-    # Logic for "Aging": use 'created_on'
-    threshold = timezone.now().date() - timedelta(days=1)
-    aging_incidents = Incident.objects.filter(created_on__lt=threshold).exclude(status='CLOSED')
-
-    # Logic for "Reopened"
-    reopened_incidents = Incident.objects.filter(status='REOPENED')
-
-    context = {
-        'all_tracked_incidents': all_tracked_incidents,
-        'aging_incidents': aging_incidents,
-        'reopened_incidents': reopened_incidents,
-    }
+    all_tracked_incidents = Incident.objects.all().order_by('-created_on')
+    context = {'all_tracked_incidents': all_tracked_incidents}
     return render(request, 'accounts/incident_tracker.html', context)
-@login_required
-def tech_tracking(request):
-    """
-    Monitor support technician workload and efficiency.
-    """
-    # Logic to calculate tech metrics will go here
-    return render(request, 'accounts/tech_tracking.html')
 
+@login_required
+def tech_tracking(request): return render(request, 'accounts/tech_tracking.html')
 
 @login_required
 def support_oversight(request):
-    if request.user.role != 'ADMIN':
-        return redirect('home')
-
-    # Monitor existing models
+    if request.user.role != 'ADMIN': return redirect('home')
     active_problems = ProblemManagement.objects.exclude(status='close')
-    pending_requests = ServiceRequest.objects.filter(status='OPEN')
-    sla_breaches = SLAManagement.objects.filter(sla_status='Breached')
-    
-    today = timezone.now().date()
-    critical_assets = Asset.objects.filter(warranty_expiry__lte=today + timedelta(days=30))
-
-    context = {
-        'active_problems': active_problems,
-        'pending_requests': pending_requests,
-        'sla_breaches': sla_breaches,
-        'critical_assets': critical_assets,
-    }
+    context = {'active_problems': active_problems}
     return render(request, 'accounts/support_oversight.html', context)
+
+@login_required
+def incident_tracking_view(request):
+    tracking_records = IncidentTracking.objects.filter(incident__empID=request.user).select_related('incident').order_by('-created_on')
+    return render(request, 'accounts/incident_tracking.html', {'tracking_records': tracking_records})
+
+
+
+@user_passes_test(lambda u: u.is_staff)
+def login_monitor_dashboard(request):
+    # Fetch all records from your existing model
+    logs = LoginMonitor.objects.all().order_by('-login_date', '-login_time')
+    return render(request, 'accounts/login_monitor.html', {'logs': logs})
+
+
+def profile_view(request):
+    if request.method == 'POST':
+        # instance=request.user tells Django to update the CURRENT user
+        form = UserProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Your profile has been updated successfully!")
+            return redirect('profile_view')
+    else:
+        form = UserProfileForm(instance=request.user)
+    
+    return render(request, 'accounts/profile.html', {'form': form})

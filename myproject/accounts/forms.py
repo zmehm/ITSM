@@ -162,3 +162,15 @@ class AssetSearchForm(forms.Form):
         label='Search Assets',
         widget=forms.TextInput(attrs={'placeholder': 'Serial Number or Custodian...', 'class': 'form-control'})
     )
+
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        # Include the fields you took during registration
+        fields = ['first_name', 'last_name', 'email', 'phone_number'] 
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
+        }
