@@ -49,4 +49,7 @@ urlpatterns = [
     path('login-monitor/', views.login_monitor_dashboard, name='login_monitor'),
     path('login-monitor/', views.login_monitor_dashboard, name='login_monitor'),
     path('profile/', views.profile_view, name='profile_view'),
+    path('chatbot-api/', views.flashbot_logic, name='chatbot_api'),
+    path('admin-approvals/', views.admin_approval_monitor, name='admin_approval_monitor'),
+    path('approve-user/<int:user_id>/', views.approve_user, name='approve_user'),
 ]

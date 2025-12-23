@@ -5,7 +5,8 @@ from .models import (
     Subsidiary, Department, Grade, Discipline, Impact,
     IncidentTracking, ServiceRequest, LoginMonitor, 
     Asset, SLAManagement, RootCauseCat, RcSubcat, 
-    ProblemManagement, ProblemCase, TicketFeedback,Vendor, SecurityManagement, BackupManagement, AuditManagement
+    ProblemManagement, ProblemCase, TicketFeedback,Vendor, SecurityManagement, BackupManagement, AuditManagement,
+    KnowledgeBase
 )
 
 # --- 1. Master Data Registration ---
@@ -220,3 +221,8 @@ class AuditAdmin(admin.ModelAdmin):
     list_display = ('timestamp', 'performed_by', 'action_type')
     readonly_fields = ('timestamp', 'performed_by', 'action_type', 'old_value', 'new_value')
     # Audits should generally be read-only to ensure integrity
+
+@admin.register(KnowledgeBase)
+class KnowledgeBaseAdmin(admin.ModelAdmin):
+    list_display = ('topic', 'category')
+    search_fields = ('topic', 'content')

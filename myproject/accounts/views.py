@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.db.models import Q 
 from datetime import timedelta
 from django.core.mail import send_mail
+import openai
 
 # --- Email and Template Imports ---
 from django.template.loader import render_to_string 
@@ -19,13 +20,13 @@ from django.core.mail import EmailMessage
 # --- Local Imports ---
 from .forms import (
     EmployeeRegistrationForm, ProfileCompletionForm, 
-    IncidentForm, FeedbackForm, ServiceRequestForm,UserProfileForm
+    IncidentForm, FeedbackForm, ServiceRequestForm, UserProfileForm
 )
 from .models import (
     Category, SubCategory, Incident, TicketFeedback, 
     IncidentTracking, ServiceRequest, SLAManagement, Asset,
     ProblemManagement, ProblemCase, RootCauseCat, RcSubcat, Vendor, 
-    SecurityManagement, BackupManagement, AuditManagement,LoginMonitor
+    SecurityManagement, BackupManagement, AuditManagement, LoginMonitor, KnowledgeBase
 )
 
 User = get_user_model() 
@@ -61,7 +62,7 @@ def get_subcategories(request, category_id):
     return JsonResponse(list(subcategories), safe=False)
 
 # =====================================================================
-# 1. AUTHENTICATION & GLOBAL VIEWS
+# 1. AUTHENTICATION & GLOBAL VIEWS (Updated with Approval Logic)
 # =====================================================================
 
 def register_employee(request):
@@ -71,10 +72,13 @@ def register_employee(request):
         form = EmployeeRegistrationForm(request.POST)
         if form.is_valid():
             try:
-                user = form.save() 
-                login(request, user)
-                messages.success(request, f"Registration successful! Your Employee ID is {user.EmpID}.")
-                return redirect('home')
+                user = form.save(commit=False)
+                # SET TO FALSE: User must be audited by Admin first
+                user.is_approved = False 
+                user.save() 
+                
+                messages.info(request, f"Registration submitted! Your Employee ID is {user.EmpID}. Please wait for Admin approval before logging in.")
+                return redirect('login_view')
             except IntegrityError:
                 messages.error(request, "Registration failed due to a database constraint.")
             except Exception as e:
@@ -92,9 +96,15 @@ def login_view(request):
         username_email = request.POST.get('username_email')
         password = request.POST.get('password')
         user = authenticate(request, username=username_email, password=password)
-        if user is not None and user.is_active:
-            login(request, user)
-            return redirect('home')
+        
+        if user is not None:
+            if user.is_active and user.is_approved:  # CHECK APPROVAL STATUS
+                login(request, user)
+                return redirect('home')
+            elif not user.is_approved:
+                messages.warning(request, 'Your account is pending administrator approval.')
+            else:
+                messages.error(request, 'This account is inactive.')
         else:
             messages.error(request, 'Invalid email or password.')
     return render(request, 'accounts/login.html')
@@ -118,11 +128,34 @@ def password_reset(request):
     return render(request, 'accounts/password_reset.html', {'form': form})
 
 # =====================================================================
-# 2. ROLE-BASED LANDING PAGE
+# 2. ADMIN APPROVAL MANAGEMENT
+# =====================================================================
+
+@login_required
+@role_required('ADMIN')
+def admin_approval_monitor(request):
+    pending_users = User.objects.filter(is_approved=False).order_by('-date_joined')
+    return render(request, 'accounts/admin_approval.html', {'pending_users': pending_users})
+
+@login_required
+@role_required('ADMIN')
+def approve_user(request, user_id):
+    user_to_approve = get_object_or_404(User, id=user_id)
+    user_to_approve.is_approved = True
+    user_to_approve.save()
+    messages.success(request, f"User {user_to_approve.username} has been approved.")
+    return redirect('admin_approval_monitor')
+
+# =====================================================================
+# 3. ROLE-BASED LANDING PAGE & DASHBOARDS
 # =====================================================================
 
 @login_required
 def home(request):
+    if not request.user.is_approved:
+        logout(request)
+        return redirect('login_view')
+
     if not request.user.Dept or not request.user.Grade or not request.user.Subsidiary:
         if request.method == 'POST':
             form = ProfileCompletionForm(request.POST, instance=request.user) 
@@ -141,10 +174,6 @@ def home(request):
         return redirect('support_dashboard')
     else: 
         return redirect('user_dashboard')
-
-# =====================================================================
-# 3. DASHBOARDS
-# =====================================================================
 
 @login_required
 @role_required('USER')
@@ -244,55 +273,47 @@ def check_threshold_and_categorize(incident):
         elif 3 <= incident_count <= 4: severity = "Moderate Issue"
 
     if severity:
-     user_full_name = f"{user.first_name} {user.last_name}"
-    
-    problem, created = ProblemManagement.objects.get_or_create(
-        root_cause_catID=subcat.rc_cat,
-        description__icontains=user_full_name,
-        status='open',
-        defaults={
-            # We put the count at the VERY END so HTML can find it easily
-            'description': f"{severity} - {user_full_name} | {incident_count}",
-            'known_issue': False  # This fixes the KEDB "YES" issue
-        }
-    )
+        user_full_name = f"{user.first_name} {user.last_name}"
+        problem, created = ProblemManagement.objects.get_or_create(
+            root_cause_catID=subcat.rc_cat,
+            description__icontains=user_full_name,
+            status='open',
+            defaults={
+                'description': f"{severity} - {user_full_name} | {incident_count}",
+                'known_issue': False
+            }
+        )
+        if not created:
+            problem.description = f"{severity} - {user_full_name} | {incident_count}"
+            problem.save()
 
-    if not created:
-        # Update existing record with the new count
-        problem.description = f"{severity} - {user_full_name} | {incident_count}"
-        problem.save()
 @login_required
 @never_cache
 def create_incident(request):
     user = request.user
     if request.method == "POST":
         form = IncidentForm(request.POST, request.FILES)
-        
-        # Manually construction with restored field names
         incident = Incident(
             subsidiary_id=request.POST.get('subsidiary'),
             catID_id=request.POST.get('catID'),
             subcatID_id=request.POST.get('subcatID'),
             description=request.POST.get('description'),
             priority=request.POST.get('priority'),
-            impact_id=request.POST.get('catID'), # Satisfy NOT NULL constraint
+            impact_id=request.POST.get('catID'),
             file_upload=request.FILES.get('file_upload'), 
             empID=user,
             created_by=user,
             status='NEW'
         )
-
         try:
             incident.save()
             check_threshold_and_categorize(incident)
-            
             IncidentTracking.objects.create(
                 incident=incident,
                 status=incident.status,
                 assigned_to="Unassigned",
                 created_by=user
             )
-            
             messages.success(request, "Incident created successfully!")
             return redirect('user_dashboard')
         except Exception as e:
@@ -303,7 +324,7 @@ def create_incident(request):
     return render(request, 'accounts/incident_management.html', {'form': form})
 
 # =====================================================================
-# 5. RESOLUTION & FEEDBACK
+# 5. RESOLUTION, FEEDBACK & BOT LOGIC
 # =====================================================================
 
 @login_required
@@ -338,8 +359,32 @@ def submit_feedback(request, incident_id):
         form = FeedbackForm()
     return render(request, 'accounts/incident_detail_feedback.html', {'ticket': ticket, 'form': form})
 
+def flashbot_logic(request):
+    if request.method == "POST":
+        user_query = request.POST.get('message', '').lower()
+        stop_words = {'what', 'is', 'the', 'name', 'of', 'for', 'can', 'i', 'get', 'a', 'do', 'you', 'have'}
+        keywords = [word for word in user_query.split() if word not in stop_words and len(word) > 2]
+        
+        if not keywords:
+            return JsonResponse({'reply': "I'm not sure I understand. Could you use keywords like 'Wi-Fi', 'Laptop', or 'VPN'?"})
+
+        kb_entry = KnowledgeBase.objects.filter(topic__icontains=" ".join(keywords)).first()
+
+        if not kb_entry:
+            search_filter = Q()
+            for word in keywords:
+                search_filter |= Q(topic__icontains=word) | Q(content__icontains=word)
+            kb_entry = KnowledgeBase.objects.filter(search_filter).distinct().first()
+
+        if kb_entry:
+            ai_response = f"**Found in Manuals ({kb_entry.topic}):** {kb_entry.content}"
+        else:
+            ai_response = "I couldn't find a specific guide for that. Would you like me to raise a ticket for you?"
+
+        return JsonResponse({'reply': ai_response})
+
 # =====================================================================
-# 6. QUEUES, TRACKING & ASSETS
+# 6. MANAGEMENT VIEWS & TRACKING
 # =====================================================================
 
 @login_required
@@ -413,7 +458,6 @@ def asset_management(request):
     assets = Asset.objects.all().select_related('category', 'custodian').order_by('-last_audit_date')
     return render(request, 'accounts/asset_management.html', {'assets': assets})
 
-# --- Placeholder Views ---
 @login_required
 def change_management(request): return render(request, 'accounts/change_management.html')
 @login_required
@@ -428,8 +472,7 @@ def audit_trail(request): return render(request, 'accounts/audit_trail.html')
 @login_required
 def incident_tracker(request):
     all_tracked_incidents = Incident.objects.all().order_by('-created_on')
-    context = {'all_tracked_incidents': all_tracked_incidents}
-    return render(request, 'accounts/incident_tracker.html', context)
+    return render(request, 'accounts/incident_tracker.html', {'all_tracked_incidents': all_tracked_incidents})
 
 @login_required
 def tech_tracking(request): return render(request, 'accounts/tech_tracking.html')
@@ -438,26 +481,20 @@ def tech_tracking(request): return render(request, 'accounts/tech_tracking.html'
 def support_oversight(request):
     if request.user.role != 'ADMIN': return redirect('home')
     active_problems = ProblemManagement.objects.exclude(status='close')
-    context = {'active_problems': active_problems}
-    return render(request, 'accounts/support_oversight.html', context)
+    return render(request, 'accounts/support_oversight.html', {'active_problems': active_problems})
 
 @login_required
 def incident_tracking_view(request):
     tracking_records = IncidentTracking.objects.filter(incident__empID=request.user).select_related('incident').order_by('-created_on')
     return render(request, 'accounts/incident_tracking.html', {'tracking_records': tracking_records})
 
-
-
 @user_passes_test(lambda u: u.is_staff)
 def login_monitor_dashboard(request):
-    # Fetch all records from your existing model
     logs = LoginMonitor.objects.all().order_by('-login_date', '-login_time')
     return render(request, 'accounts/login_monitor.html', {'logs': logs})
 
-
 def profile_view(request):
     if request.method == 'POST':
-        # instance=request.user tells Django to update the CURRENT user
         form = UserProfileForm(request.POST, instance=request.user)
         if form.is_valid():
             form.save()
@@ -465,5 +502,4 @@ def profile_view(request):
             return redirect('profile_view')
     else:
         form = UserProfileForm(instance=request.user)
-    
     return render(request, 'accounts/profile.html', {'form': form})

@@ -54,7 +54,7 @@ class CustomUser(AbstractUser):
     Dept = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
     Grade = models.ForeignKey(Grade, on_delete=models.SET_NULL, null=True, blank=True)
     Discipline = models.ForeignKey(Discipline, on_delete=models.SET_NULL, null=True, blank=True)
-    
+    is_approved = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True) 
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     date_of_birth = models.DateField(null=True, blank=True)
@@ -301,3 +301,12 @@ class AuditManagement(models.Model):
     action_type = models.CharField(max_length=100) # Update/Delete/Create
     old_value = models.TextField(null=True, blank=True) #
     new_value = models.TextField(null=True, blank=True) #
+
+
+class KnowledgeBase(models.Model):
+    topic = models.CharField(max_length=200)
+    content = models.TextField() # This contains the "how-to" guide
+    category = models.CharField(max_length=100) # Hardware, Software, etc.
+
+    def __str__(self):
+        return self.topic
